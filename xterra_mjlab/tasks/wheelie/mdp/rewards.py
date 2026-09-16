@@ -49,8 +49,8 @@ def rear_wheelie_reward(
 
     fl_on = contact[:, 0]
     fr_on = contact[:, 1]
-    rl_off = ~contact[:, 2]
-    rr_off = ~contact[:, 3]
+    rl_off = contact[:, 2] < 0.5
+    rr_off = contact[:, 3] < 0.5
 
     correct_config = (fl_on & fr_on & rl_off & rr_off).float()
 
