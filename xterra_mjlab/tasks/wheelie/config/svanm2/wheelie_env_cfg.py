@@ -13,6 +13,8 @@ def svanm2_front_wheelie_cfg(play: bool = False):
 
     # No velocity commands for wheelie
     cfg.commands.clear()
+    cfg.curriculum.clear()
+    
     cfg.observations["actor"].terms.pop("command", None)
     cfg.observations["critic"].terms.pop("command", None)
 
