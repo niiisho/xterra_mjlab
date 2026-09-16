@@ -33,6 +33,11 @@ def svanm2_front_wheelie_cfg(play: bool = False):
     # Wheelie looks like falling - remove fell_over
     cfg.terminations.pop("fell_over", None)
 
+    cfg.terminations["base_too_low"] = TerminationTermCfg(
+        func=wheelie_mdp.base_height_too_low,
+        params={"min_height": 0.25}, # If the torso drops below 25cm, terminate!
+    )
+
     # Add wheelie rewards
     # In svanm2_front_wheelie_cfg replace the three reward terms with:
     cfg.rewards["front_wheelie"] = RewardTermCfg(
