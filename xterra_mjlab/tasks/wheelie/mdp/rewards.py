@@ -70,3 +70,8 @@ def excessive_roll(env, max_roll: float = 0.785) -> torch.Tensor:
     gravity = env.scene["robot"].data.projected_gravity_b
     roll_signal = gravity[:, 1].abs()
     return roll_signal > max_roll  # bool tensor, no .float()
+
+def base_height_too_low(env, min_height: float):
+    """Terminate the episode if the robot's body drops to the floor (e.g. resting on its head)."""
+    # env.base_pos contains [x, y, z] coordinates of the torso
+    return env.base_pos[:, 2] < min_height
