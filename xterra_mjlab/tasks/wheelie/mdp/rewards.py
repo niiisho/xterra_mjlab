@@ -18,8 +18,8 @@ def front_wheelie_reward(
 
     fl_off = contact[:, 0] < 0.5
     fr_off = contact[:, 1] < 0.5
-    rl_on = contact[:, 2]
-    rr_on = contact[:, 3]
+    rl_on = contact[:, 2] >= 0.5
+    rr_on = contact[:, 3] >= 0.5
 
     # All four conditions must be true at the same time
     # If robot is on its back, rl_on and rr_on are False -> reward is zero
@@ -47,8 +47,8 @@ def rear_wheelie_reward(
     sensor = env.scene.sensors[sensor_name]
     contact = sensor.data.found.squeeze(-1)
 
-    fl_on = contact[:, 0]
-    fr_on = contact[:, 1]
+    fl_on = contact[:, 0] >= 0.5
+    fr_on = contact[:, 1] >= 0.5
     rl_off = contact[:, 2] < 0.5
     rr_off = contact[:, 3] < 0.5
 
