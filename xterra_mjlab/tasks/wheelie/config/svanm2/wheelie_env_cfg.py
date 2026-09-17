@@ -89,3 +89,12 @@ def svanm2_front_wheelie_cfg(play: bool = False):
     )
 
     return cfg
+
+
+def svanm2_front_wheelie_fromflat_cfg(play: bool = False):
+    # Placeholder to prevent the __init__.py import crash
+    return svanm2_front_wheelie_cfg(play=play)
+
+def svanm2_rear_wheelie_cfg(play: bool = False):
+    # Placeholder to prevent the __init__.py import crash
+    return svanm2_front_wheelie_cfg(play=play)
