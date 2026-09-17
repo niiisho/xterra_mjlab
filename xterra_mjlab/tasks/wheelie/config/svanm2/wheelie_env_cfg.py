@@ -23,7 +23,7 @@ def svanm2_front_wheelie_cfg(play: bool = False):
     thigh_ground_cfg = ContactSensorCfg(
         name="thigh_ground_touch",
         primary=ContactMatch(mode="body", entity="robot", pattern="(FL|FR|RL|RR)_thigh_link"),
-        secondary=ContactMatch(pattern=".*"), 
+        secondary=ContactMatch(mode="body", pattern=".*"), 
         fields=("found",),
         reduce="none",
         num_slots=1,
@@ -31,7 +31,7 @@ def svanm2_front_wheelie_cfg(play: bool = False):
     trunk_ground_cfg = ContactSensorCfg(
         name="trunk_ground_touch",
         primary=ContactMatch(mode="body", entity="robot", pattern="base"),
-        secondary=ContactMatch(pattern=".*"),
+        secondary=ContactMatch(mode="body", pattern=".*"),
         fields=("found",),
         reduce="none",
         num_slots=1,
