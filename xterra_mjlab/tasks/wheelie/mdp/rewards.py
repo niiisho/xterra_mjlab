@@ -88,3 +88,9 @@ def non_foot_contact_penalty(
     illegal_contact = shank_any | thigh_any | trunk_any
 
     return illegal_contact.float()
+
+
+def jump_momentum_reward(env):
+    # root_ang_vel_w[:, 1] is the pitch velocity (Y-axis rotation).
+    pitch_vel = env.scene["robot"].data.root_ang_vel_w[:, 1]
+    return pitch_vel.clamp(min=0.0)
