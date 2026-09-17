@@ -39,12 +39,6 @@ def svanm2_front_wheelie_cfg(play: bool = False):
         params={"min_height": 0.25}, # If the torso drops below 25cm, terminate!
     )
 
-    # Kill the episode if the pitch drops below the threshold (e.g., 0.3)
-    cfg.terminations["pitch_flat"] = TerminationTermCfg(
-        func=pitch_too_flat,
-        params={"min_pitch": 0.3}, 
-    )
-
     # Add wheelie rewards
     # In svanm2_front_wheelie_cfg replace the three reward terms with:
     cfg.rewards["front_wheelie"] = RewardTermCfg(
