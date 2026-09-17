@@ -18,7 +18,7 @@ def svanm2_front_wheelie_cfg(play: bool = False):
     cfg.events.pop("reset_base", None)
     cfg.events.pop("reset_robot_joints", None)
     cfg.events.pop("push_robot", None)
-    # cfg.events.pop("reset_robot_state", None)
+    cfg.events.pop("reset_robot_state", None)
 
     cfg.events["reset_robot_state"] = EventTermCfg(
         func=wheelie_mdp.reset_to_wheelie_pose,
