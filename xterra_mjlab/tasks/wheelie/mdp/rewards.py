@@ -81,10 +81,12 @@ def non_foot_contact_penalty(
     thigh_contact = env.scene.sensors[thigh_sensor_name].data.found
     trunk_contact = env.scene.sensors[trunk_sensor_name].data.found
 
+    # Safely reduce the sensor slots without destroying the batch dimension
     shank_any = shank_contact.any(dim=-1).any(dim=-1)
     thigh_any = thigh_contact.any(dim=-1).any(dim=-1)
-    trunk_any = trunk_contact.any(dim=-1).any(dim=-1).bool()
+    trunk_any = trunk_contact.any(dim=-1).any(dim=-1)
 
     illegal_contact = shank_any | thigh_any | trunk_any
 
-    return illegal_contact.float()
+    # Enforce the exact shape expected by the Reward Manager
+    return illegal_contact.float().view(env.num_envs)
