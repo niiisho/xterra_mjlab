@@ -76,10 +76,11 @@ def non_foot_contact_penalty(
     thigh_contact = env.scene.sensors[thigh_sensor_name].data.found
     trunk_contact = env.scene.sensors[trunk_sensor_name].data.found
 
-    shank_any = shank_contact.any(dim=-1).any(dim=-1)
-    thigh_any = thigh_contact.any(dim=-1).any(dim=-1)
-    trunk_any = trunk_contact.any(dim=-1).any(dim=-1)
+    # Reshape to (num_envs, -1) first to handle any sensor shape
+    # Then check if any contact exists across all bodies and slots
+    shank_any = shank_contact.reshape(env.num_envs, -1).any(dim=-1)
+    thigh_any = thigh_contact.reshape(env.num_envs, -1).any(dim=-1)
+    trunk_any = trunk_contact.reshape(env.num_envs, -1).any(dim=-1)
 
     illegal_contact = shank_any | thigh_any | trunk_any
-
-    return illegal_contact.float().view(env.num_envs)
+    return illegal_contact.float()
