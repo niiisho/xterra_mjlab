@@ -72,4 +72,5 @@ def excessive_roll(env, max_roll: float = 0.785) -> torch.Tensor:
     return roll_signal > max_roll  # bool tensor, no .float()
 
 def base_height_too_low(env, min_height: float):
-    return env.scene["robot"].data.root_pos_w[:, 2] < min_height
+    # body_pos_w contains all links. [:, 0, 2] means: all environments, 0th body (the base), Z-axis (height)
+    return env.scene["robot"].data.body_pos_w[:, 0, 2] < min_height
