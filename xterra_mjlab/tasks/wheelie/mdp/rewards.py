@@ -83,7 +83,7 @@ def non_foot_contact_penalty(
 
     shank_any = shank_contact.any(dim=-1).any(dim=-1)
     thigh_any = thigh_contact.any(dim=-1).any(dim=-1)
-    trunk_any = trunk_contact.any(dim=-1).any(dim=-1)
+    trunk_any = trunk_contact.any(dim=-1).any(dim=-1).bool()
 
     illegal_contact = shank_any | thigh_any | trunk_any
 
