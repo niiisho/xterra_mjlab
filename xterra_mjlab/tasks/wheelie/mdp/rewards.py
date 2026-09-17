@@ -6,13 +6,9 @@ import torch
 def front_wheelie_reward(
     env,
     sensor_name: str,
-    target_pitch: float = 0.5
+    target_pitch: float = 0.5,
+    min_pitch: float = 0.3,
 ) -> torch.Tensor:
-    """
-    Front wheelie: rear feet grounded, front feet airborne, body pitched back.
-    All three conditions required simultaneously - prevents dead bug exploit.
-    target_pitch normalizes the pitch component so reward peaks at target angle.
-    """
     sensor = env.scene.sensors[sensor_name]
     contact = sensor.data.found.squeeze(-1)
 
@@ -21,18 +17,18 @@ def front_wheelie_reward(
     rl_on = contact[:, 2] >= 0.5
     rr_on = contact[:, 3] >= 0.5
 
-    # All four conditions must be true at the same time
-    # If robot is on its back, rl_on and rr_on are False -> reward is zero
     correct_config = (fl_off & fr_off & rl_on & rr_on).float()
 
-    # Pitch reward normalized by target_pitch
-    # gravity[:, 0] positive when body tilts backward in body frame
-    # Clamp to target_pitch so reward doesn't keep growing past target angle
     gravity = env.scene["robot"].data.projected_gravity_b
-    pitch = gravity[:, 0].clamp(min=0.0, max=target_pitch) / target_pitch
+    pitch_raw = gravity[:, 0]
 
-    # Multiply: zero reward if contact config is wrong regardless of pitch
-    return correct_config * pitch
+    # Zero reward if pitch below minimum threshold
+    # This kills the knee-tripod exploit - body isn't pitched enough
+    above_minimum = (pitch_raw >= min_pitch).float()
+
+    pitch = pitch_raw.clamp(min=0.0, max=target_pitch) / target_pitch
+
+    return correct_config * above_minimum * pitch
 
 
 def rear_wheelie_reward(
