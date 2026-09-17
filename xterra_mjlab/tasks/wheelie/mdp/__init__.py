@@ -5,5 +5,6 @@ from .rewards import (
     illegal_contact_fall,
     front_continuous_air_reward,
     front_contact_penalty,
+    base_height_penalty,
 )
 from .events import reset_to_wheelie_pose
