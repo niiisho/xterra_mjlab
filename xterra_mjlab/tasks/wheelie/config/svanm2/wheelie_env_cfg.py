@@ -13,7 +13,24 @@ from mjlab.sensor import ContactSensorCfg, ContactMatch
 
 def svanm2_front_wheelie_cfg(play: bool = False):
     cfg = svanm2_flat_env_cfg(play=play)
-    print(cfg.events)
+    
+    # Remove events that override wheelie spawn position
+    cfg.events.pop("reset_base", None)
+    cfg.events.pop("reset_robot_joints", None)
+
+# Remove random pushes during wheelie training
+# Robot needs stable environment to learn balance first
+    cfg.events.pop("push_robot", None)
+
+# Now add our wheelie spawn - nothing will override it
+    cfg.events["reset_robot_state"] = EventTermCfg(
+        func=wheelie_mdp.reset_to_wheelie_pose,
+        mode="reset",
+        params={
+            "pitch_angle": 0.7,
+            "base_height": 0.45,
+        },
+    )
 
     # Add back knee and shin contact sensors removed by flat config
     shank_ground_cfg = ContactSensorCfg(
@@ -68,7 +85,7 @@ def svanm2_front_wheelie_cfg(play: bool = False):
 
     cfg.terminations["base_too_low"] = TerminationTermCfg(
         func=base_height_too_low,
-        params={"min_height": 0.25},
+        params={"min_height": 0.22},
     )
     cfg.terminations["sideways_fall"] = TerminationTermCfg(
         func=wheelie_mdp.excessive_roll,
@@ -92,15 +109,6 @@ def svanm2_front_wheelie_cfg(play: bool = False):
             "shank_sensor_name": "shank_ground_touch",
             "thigh_sensor_name": "thigh_ground_touch",
             "trunk_sensor_name": "trunk_ground_touch",
-        },
-    )
-
-    cfg.events["reset_robot_state"] = EventTermCfg(
-        func=wheelie_mdp.reset_to_wheelie_pose,
-        mode="reset",
-        params={
-            "pitch_angle": 0.7,   # ~40 degrees backward
-            "base_height": 0.45,
         },
     )
 
