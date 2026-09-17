@@ -109,10 +109,13 @@ def svanm2_front_wheelie_cfg(play: bool = False):
         },
     )
 
-    cfg.rewards["continuous_air"] = RewardTermCfg(
-        func=wheelie_mdp.front_continuous_air_reward,
-        weight=10.0,
-        params={"sensor_name": "feet_ground_contact"},
+    cfg.rewards["front_air_height"] = RewardTermCfg(
+        func=wheelie_mdp.front_air_height_reward,
+        weight=5.0,  # A flat 5.0 points per frame if it holds the high wheelie
+        params={
+            "sensor_name": "feet_ground_contact",
+            "min_height": 0.42
+        },
     )
 
     cfg.rewards["front_contact_penalty"] = RewardTermCfg(
