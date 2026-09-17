@@ -80,7 +80,10 @@ def svanm2_front_wheelie_cfg(play: bool = False):
     # 0.25m gives it enough room to do a deep squat before jumping, but kills it if it completely collapses
     cfg.terminations["base_too_low"] = TerminationTermCfg(
         func=wheelie_mdp.base_height_too_low,
-        params={"min_height": 0.25},
+        params={
+            "min_height": 0.39,
+            "grace_period": 100
+        },
     )
     
     cfg.terminations["sideways_fall"] = TerminationTermCfg(
