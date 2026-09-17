@@ -81,7 +81,7 @@ def svanm2_front_wheelie_cfg(play: bool = False):
     cfg.terminations["base_too_low"] = TerminationTermCfg(
         func=wheelie_mdp.base_height_too_low,
         params={
-            "min_height": 0.39,
+            "min_height": 0.35,
             "grace_period": 100
         },
     )
@@ -105,7 +105,7 @@ def svanm2_front_wheelie_cfg(play: bool = False):
         func=wheelie_mdp.base_height_penalty,
         weight=-2.0,
         params={
-            "penalty_threshold": 0.45,
+            "penalty_threshold": 0.43,
         },
     )
 
