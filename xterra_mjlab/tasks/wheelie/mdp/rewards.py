@@ -72,7 +72,26 @@ def base_height_too_low(env, min_height: float):
     # body_com_pos_w = Body Center of Mass Position in World frame
     return env.scene["robot"].data.body_com_pos_w[:, 0, 2] < min_height
 
-def pitch_too_flat(env, min_pitch: float):
-    gravity = env.scene["robot"].data.projected_gravity_b
-    pitch_raw = gravity[:, 0]
-    return pitch_raw < min_pitch
+def non_foot_contact_penalty(
+    env,
+    shank_sensor_name: str,
+    thigh_sensor_name: str,
+    trunk_sensor_name: str,
+) -> torch.Tensor:
+    """
+    Return 1.0 for any environment where a non-foot body part touches the ground.
+    Applied with negative weight so it becomes a penalty.
+    Catches knee, shin, and trunk contact exploits.
+    """
+    shank_contact = env.scene.sensors[shank_sensor_name].data.found
+    thigh_contact = env.scene.sensors[thigh_sensor_name].data.found
+    trunk_contact = env.scene.sensors[trunk_sensor_name].data.found
+
+    # Any contact in any of these sensors across all legs
+    shank_any = shank_contact.any(dim=-1).any(dim=-1)
+    thigh_any = thigh_contact.any(dim=-1).any(dim=-1)
+    trunk_any = trunk_contact.squeeze(-1).squeeze(-1).bool()
+
+    illegal_contact = shank_any | thigh_any | trunk_any
+
+    return illegal_contact.float()
