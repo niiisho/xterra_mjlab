@@ -8,6 +8,7 @@ from xterra_mjlab.tasks.velocity.config.svanm2.env_cfgs import svanm2_flat_env_c
 from xterra_mjlab.tasks.wheelie import mdp as wheelie_mdp
 from xterra_mjlab.tasks.wheelie.mdp.rewards import base_height_too_low
 from xterra_mjlab.tasks.wheelie.mdp.rewards import non_foot_contact_penalty
+from xterra_mjlab.tasks.wheelie.mdp.rewards import jump_momentum_reward
 from mjlab.managers.event_manager import EventTermCfg
 from mjlab.sensor import ContactSensorCfg, ContactMatch
 
@@ -27,8 +28,8 @@ def svanm2_front_wheelie_cfg(play: bool = False):
         func=wheelie_mdp.reset_to_wheelie_pose,
         mode="reset",
         params={
-            "pitch_angle": 0.7,
-            "base_height": 0.45,
+            "pitch_angle": 0.4,
+            "base_height": 0.35,
         },
     )
 
@@ -100,6 +101,11 @@ def svanm2_front_wheelie_cfg(play: bool = False):
             "sensor_name": "feet_ground_contact",
             "target_pitch": 0.5,
         },
+    )
+
+    cfg.rewards["jump_momentum"] = RewardTermCfg(
+        func=jump_momentum_reward,
+        weight=2.0,  # High enough to encourage jumping, low enough not to override the balance
     )
 
     # Penalty for any non-foot contact - knees, shins, trunk
