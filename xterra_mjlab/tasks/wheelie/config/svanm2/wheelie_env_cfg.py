@@ -91,6 +91,7 @@ def svanm2_front_wheelie_cfg(play: bool = False):
             "shank_sensor_name": "shank_ground_touch",
             "thigh_sensor_name": "thigh_ground_touch",
             "trunk_sensor_name": "trunk_ground_touch",
+            "grace_steps": 150,
         },
     )
 
