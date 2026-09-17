@@ -34,9 +34,11 @@ def excessive_roll(env, max_roll: float = 0.785) -> torch.Tensor:
     return roll_signal > max_roll
 
 
-def base_height_too_low(env, min_height: float):
+def base_height_too_low(env, min_height: float, grace_period: int = 100):
     is_low = env.scene["robot"].data.body_com_pos_w[:, 0, 2] < min_height
-    return is_low
+    past_grace = env.episode_length_buf > grace_period
+    
+    return is_low & past_grace
 
 
 def illegal_contact_fall(
