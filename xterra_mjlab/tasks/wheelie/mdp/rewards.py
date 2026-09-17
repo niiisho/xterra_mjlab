@@ -45,7 +45,7 @@ def rear_wheelie_reward(
     rl_off = contact[:, 2] < 0.5
     rr_off = contact[:, 3] < 0.5
 
-    correct_config = (fl_on & fr_on & rl_off & rr_off).float()
+    correct_config = (fl_off & fr_off & (rl_on | rr_on)).float()
 
     # Pitch forward = gravity x-component negative in body frame
     gravity = env.scene["robot"].data.projected_gravity_b
