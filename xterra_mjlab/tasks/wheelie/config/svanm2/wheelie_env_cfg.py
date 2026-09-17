@@ -27,8 +27,8 @@ def svanm2_front_wheelie_cfg(play: bool = False):
         func=wheelie_mdp.reset_to_wheelie_pose,
         mode="reset",
         params={
-            "pitch_angle": 0.4,
-            "base_height": 0.35,
+            "pitch_angle": 0.6,
+            "base_height": 0.45,
         },
     )
 
