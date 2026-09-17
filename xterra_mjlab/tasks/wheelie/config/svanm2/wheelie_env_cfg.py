@@ -101,6 +101,14 @@ def svanm2_front_wheelie_cfg(play: bool = False):
         },
     )
 
+    cfg.rewards["squat_penalty"] = RewardTermCfg(
+        func=wheelie_mdp.base_height_penalty,
+        weight=-2.0,
+        params={
+            "penalty_threshold": 0.45,
+        },
+    )
+
     cfg.rewards["continuous_air"] = RewardTermCfg(
         func=wheelie_mdp.front_continuous_air_reward,
         weight=10.0,
