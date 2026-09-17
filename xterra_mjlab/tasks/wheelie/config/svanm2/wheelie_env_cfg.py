@@ -61,9 +61,7 @@ def svanm2_front_wheelie_cfg(play: bool = False):
 def svanm2_rear_wheelie_cfg(play: bool = False):
     cfg = svanm2_front_wheelie_cfg(play=play)
 
-    cfg.rewards.pop("front_feet_air", None)
-    cfg.rewards.pop("rear_feet_contact", None)
-    cfg.rewards.pop("wheelie_pitch", None)
+    cfg.rewards.pop("front_wheelie", None)
 
     # In svanm2_rear_wheelie_cfg replace with:
     cfg.rewards["rear_wheelie"] = RewardTermCfg(
