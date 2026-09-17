@@ -7,6 +7,7 @@ from mjlab.sensor import ContactSensorCfg, ContactMatch
 
 from xterra_mjlab.tasks.velocity.config.svanm2.env_cfgs import svanm2_flat_env_cfg
 from xterra_mjlab.tasks.wheelie import mdp as wheelie_mdp
+from mjlab.managers.event_manager import EventTermCfg
 
 
 def svanm2_front_wheelie_cfg(play: bool = False):
@@ -17,7 +18,16 @@ def svanm2_front_wheelie_cfg(play: bool = False):
     cfg.events.pop("reset_base", None)
     cfg.events.pop("reset_robot_joints", None)
     cfg.events.pop("push_robot", None)
-    cfg.events.pop("reset_robot_state", None)
+    # cfg.events.pop("reset_robot_state", None)
+
+    cfg.events["reset_robot_state"] = EventTermCfg(
+        func=wheelie_mdp.reset_to_wheelie_pose,
+        mode="reset",
+        params={
+            "pitch_angle": -0.6,  # THE FIX: Negative pitches backward onto rear legs!
+            "base_height": 0.45,
+        },
+    )
 
     # 2. SENSORS (Only checking Thighs and Trunk against any ground surface)
     thigh_ground_cfg = ContactSensorCfg(
