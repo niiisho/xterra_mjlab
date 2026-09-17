@@ -3,11 +3,7 @@
 import torch
 
 
-def front_wheelie_reward(
-    env,
-    sensor_name: str,
-    target_pitch: float = 0.5,
-) -> torch.Tensor:
+def front_wheelie_reward(env, sensor_name, target_pitch=0.5):
     sensor = env.scene.sensors[sensor_name]
     contact = sensor.data.found.squeeze(-1)
 
@@ -16,13 +12,19 @@ def front_wheelie_reward(
     rl_on = contact[:, 2] >= 0.5
     rr_on = contact[:, 3] >= 0.5
 
-    correct_config = (fl_off & fr_off & rl_on & rr_on).float()
+    correct_config = (fl_off & fr_off & (rl_on | rr_on)).float()
 
     gravity = env.scene["robot"].data.projected_gravity_b
     pitch_raw = gravity[:, 0].clamp(min=0.0, max=target_pitch) / target_pitch
 
-    # No pitch_only_reward - it causes 4-leg tilt exploit
-    return correct_config * pitch_raw
+    # Full reward for correct wheelie config
+    wheelie_reward = correct_config * pitch_raw
+
+    # Small pitch signal always active - gives gradient from flat ground
+    # Weight 10.0 * 0.05 = 0.5 max, much less than full wheelie reward of 10.0
+    pitch_signal = pitch_raw * 0.05
+
+    return wheelie_reward + pitch_signal
 
 
 def rear_wheelie_reward(
@@ -66,20 +68,13 @@ def base_height_too_low(env, min_height: float):
     is_low = env.scene["robot"].data.body_com_pos_w[:, 0, 2] < min_height    
     return is_low
 
-def non_foot_contact_penalty(
+def non_foot_illegal_contact(
     env,
     shank_sensor_name: str,
     thigh_sensor_name: str,
     trunk_sensor_name: str,
 ) -> torch.Tensor:
-    shank_contact = env.scene.sensors[shank_sensor_name].data.found
-    thigh_contact = env.scene.sensors[thigh_sensor_name].data.found
-    trunk_contact = env.scene.sensors[trunk_sensor_name].data.found
-
-    shank_any = shank_contact.any(dim=-1).any(dim=-1)
-    thigh_any = thigh_contact.any(dim=-1).any(dim=-1)
-    trunk_any = trunk_contact.squeeze(-1).squeeze(-1).bool()
-
-    illegal_contact = shank_any | thigh_any | trunk_any
-
-    return illegal_contact.float()
+    shank_any = env.scene.sensors[shank_sensor_name].data.found.any(dim=-1).any(dim=-1)
+    thigh_any = env.scene.sensors[thigh_sensor_name].data.found.any(dim=-1).any(dim=-1)
+    trunk_any = env.scene.sensors[trunk_sensor_name].data.found.any(dim=-1).any(dim=-1)
+    return (shank_any | thigh_any | trunk_any).view(env.num_envs)
