@@ -104,4 +104,11 @@ def front_contact_penalty(env, sensor_name: str) -> torch.Tensor:
     
     # Returns 1.0 if either front foot touches the ground
     return (fl_on | fr_on).float()
+
+def base_height_penalty(env, penalty_threshold: float) -> torch.Tensor:
+    height = env.scene["robot"].data.body_com_pos_w[:, 0, 2]
+    
+    # Check if the robot's hips have dropped into the warning zone
+    is_low = height < penalty_threshold
+    return (is_low).float()
     
