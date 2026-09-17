@@ -7,7 +7,6 @@ def front_wheelie_reward(
     env,
     sensor_name: str,
     target_pitch: float = 0.5,
-    min_pitch: float = 0.3,
 ) -> torch.Tensor:
     sensor = env.scene.sensors[sensor_name]
     contact = sensor.data.found.squeeze(-1)
@@ -20,15 +19,17 @@ def front_wheelie_reward(
     correct_config = (fl_off & fr_off & rl_on & rr_on).float()
 
     gravity = env.scene["robot"].data.projected_gravity_b
-    pitch_raw = gravity[:, 0]
+    pitch_raw = gravity[:, 0].clamp(min=0.0, max=target_pitch) / target_pitch
 
-    # Zero reward if pitch below minimum threshold
-    # This kills the knee-tripod exploit - body isn't pitched enough
-    above_minimum = (pitch_raw >= min_pitch).float()
+    # Full reward only when contact config is correct
+    wheelie_reward = correct_config * pitch_raw
 
-    pitch = pitch_raw.clamp(min=0.0, max=target_pitch) / target_pitch
+    # Small pitch reward always active regardless of foot contact
+    # Teaches robot to tilt before it discovers full wheelie
+    # 0.1 weight means it contributes but doesn't dominate
+    pitch_only_reward = pitch_raw * 0.1
 
-    return correct_config * above_minimum * pitch
+    return wheelie_reward + pitch_only_reward
 
 
 def rear_wheelie_reward(
