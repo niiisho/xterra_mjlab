@@ -3,7 +3,7 @@ from .rewards import (
     excessive_roll,
     base_height_too_low,
     illegal_contact_fall,
-    front_continuous_air_reward,
+    front_air_height_reward,
     front_contact_penalty,
     base_height_penalty,
 )
