@@ -46,6 +46,7 @@ def svanm2_front_wheelie_cfg(play: bool = False):
         params={
             "sensor_name": "feet_ground_contact",
             "target_pitch": 0.5,
+            "min_pitch": 0.3,
         },
     )
 
