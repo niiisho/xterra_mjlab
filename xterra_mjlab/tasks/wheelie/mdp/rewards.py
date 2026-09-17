@@ -7,7 +7,6 @@ def front_wheelie_reward(
     env,
     sensor_name: str,
     target_pitch: float = 0.5,
-    grace_steps: int = 150,
 ) -> torch.Tensor:
     sensor = env.scene.sensors[sensor_name]
     contact = sensor.data.found.squeeze(-1)
@@ -25,11 +24,8 @@ def front_wheelie_reward(
     wheelie_reward = correct_config * pitch_raw
     pitch_only_reward = pitch_raw * 0.1
 
-    # Block all wheelie reward for first grace_steps
-    # Gives robot time to land and stabilize before trying to wheelie
-    past_grace = (env.episode_length_buf >= grace_steps).float()
 
-    return past_grace * (wheelie_reward + pitch_only_reward)
+    return wheelie_reward + pitch_only_reward
 
 
 def rear_wheelie_reward(
@@ -77,7 +73,6 @@ def non_foot_contact_penalty(
     shank_sensor_name: str,
     thigh_sensor_name: str,
     trunk_sensor_name: str,
-    grace_steps: int = 150,
 ) -> torch.Tensor:
     shank_contact = env.scene.sensors[shank_sensor_name].data.found
     thigh_contact = env.scene.sensors[thigh_sensor_name].data.found
@@ -89,6 +84,4 @@ def non_foot_contact_penalty(
 
     illegal_contact = shank_any | thigh_any | trunk_any
 
-    past_grace = (env.episode_length_buf >= grace_steps).float()
-
-    return illegal_contact.float() * past_grace
+    return illegal_contact.float()
