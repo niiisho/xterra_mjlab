@@ -80,7 +80,6 @@ def svanm2_front_wheelie_cfg(play: bool = False):
         params={
             "sensor_name": "feet_ground_contact",
             "target_pitch": 0.5,
-            "grace_steps": 150,
         },
     )
 
@@ -92,7 +91,6 @@ def svanm2_front_wheelie_cfg(play: bool = False):
             "shank_sensor_name": "shank_ground_touch",
             "thigh_sensor_name": "thigh_ground_touch",
             "trunk_sensor_name": "trunk_ground_touch",
-            "grace_steps": 150,
         },
     )
 
