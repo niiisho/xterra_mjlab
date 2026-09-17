@@ -84,7 +84,7 @@ def svanm2_front_wheelie_cfg(play: bool = False):
 
     # Penalty for any non-foot contact - knees, shins, trunk
     cfg.rewards["non_foot_contact_penalty"] = RewardTermCfg(
-        func=wheelie_mdp.non_foot_contact_penalty,
+        func=non_foot_contact_penalty,
         weight=-5.0,
         params={
             "shank_sensor_name": "shank_ground_touch",
