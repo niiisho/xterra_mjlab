@@ -7,19 +7,50 @@ from mjlab.managers.reward_manager import RewardTermCfg
 from xterra_mjlab.tasks.velocity.config.svanm2.env_cfgs import svanm2_flat_env_cfg
 from xterra_mjlab.tasks.wheelie import mdp as wheelie_mdp
 from xterra_mjlab.tasks.wheelie.mdp.rewards import base_height_too_low
-from xterra_mjlab.tasks.wheelie.mdp.rewards import pitch_too_flat
+from xterra_mjlab.tasks.wheelie.mdp.rewards import non_foot_contact_penalty
+from mjlab.sensor import ContactSensorCfg, ContactMatch
 
 def svanm2_front_wheelie_cfg(play: bool = False):
     cfg = svanm2_flat_env_cfg(play=play)
 
-    # No velocity commands for wheelie
+    # Add back knee and shin contact sensors removed by flat config
+    shank_ground_cfg = ContactSensorCfg(
+        name="shank_ground_touch",
+        primary=ContactMatch(mode="body", entity="robot", pattern="(FL|FR|RL|RR)_shank_link"),
+        secondary=ContactMatch(mode="body", pattern="terrain"),
+        fields=("found",),
+        reduce="none",
+        num_slots=1,
+    )
+    thigh_ground_cfg = ContactSensorCfg(
+        name="thigh_ground_touch",
+        primary=ContactMatch(mode="body", entity="robot", pattern="(FL|FR|RL|RR)_thigh_link"),
+        secondary=ContactMatch(mode="body", pattern="terrain"),
+        fields=("found",),
+        reduce="none",
+        num_slots=1,
+    )
+    trunk_ground_cfg = ContactSensorCfg(
+        name="trunk_ground_touch",
+        primary=ContactMatch(mode="body", entity="robot", pattern="base"),
+        secondary=ContactMatch(mode="body", pattern="terrain"),
+        fields=("found",),
+        reduce="none",
+        num_slots=1,
+    )
+
+    cfg.scene.sensors = (cfg.scene.sensors or ()) + (
+        shank_ground_cfg,
+        thigh_ground_cfg,
+        trunk_ground_cfg,
+    )
+
+    # rest of your existing code...
     cfg.commands.clear()
     cfg.curriculum.clear()
-    
     cfg.observations["actor"].terms.pop("command", None)
     cfg.observations["critic"].terms.pop("command", None)
 
-    # Remove velocity tracking rewards
     for key in [
         "track_linear_velocity",
         "track_angular_velocity",
@@ -31,16 +62,17 @@ def svanm2_front_wheelie_cfg(play: bool = False):
     ]:
         cfg.rewards.pop(key, None)
 
-    # Wheelie looks like falling - remove fell_over
     cfg.terminations.pop("fell_over", None)
 
     cfg.terminations["base_too_low"] = TerminationTermCfg(
-        func=base_height_too_low,
-        params={"min_height": 0.25}, # If the torso drops below 25cm, terminate!
+        func=wheelie_mdp.base_height_too_low,
+        params={"min_height": 0.25},
+    )
+    cfg.terminations["sideways_fall"] = TerminationTermCfg(
+        func=wheelie_mdp.excessive_roll,
+        params={"max_roll": math.radians(45.0)},
     )
 
-    # Add wheelie rewards
-    # In svanm2_front_wheelie_cfg replace the three reward terms with:
     cfg.rewards["front_wheelie"] = RewardTermCfg(
         func=wheelie_mdp.front_wheelie_reward,
         weight=10.0,
@@ -50,10 +82,15 @@ def svanm2_front_wheelie_cfg(play: bool = False):
         },
     )
 
-    # Only terminate on sideways roll, not pitch
-    cfg.terminations["sideways_fall"] = TerminationTermCfg(
-        func=wheelie_mdp.excessive_roll,
-        params={"max_roll": math.radians(45.0)},
+    # Penalty for any non-foot contact - knees, shins, trunk
+    cfg.rewards["non_foot_contact_penalty"] = RewardTermCfg(
+        func=wheelie_mdp.non_foot_contact_penalty,
+        weight=-5.0,
+        params={
+            "shank_sensor_name": "shank_ground_touch",
+            "thigh_sensor_name": "thigh_ground_touch",
+            "trunk_sensor_name": "trunk_ground_touch",
+        },
     )
 
     return cfg
