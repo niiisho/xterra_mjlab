@@ -57,42 +57,28 @@ def illegal_contact_fall(
     return thigh_any | trunk_any
 
 
-def front_continuous_air_reward(env, sensor_name: str) -> torch.Tensor:
+def front_air_height_reward(
+    env, 
+    sensor_name: str, 
+    min_height: float = 0.42
+) -> torch.Tensor:
     sensor = env.scene.sensors[sensor_name]
     contact = sensor.data.found.squeeze(-1)
 
+    # Front in air, rear on ground
     fl_off = contact[:, 0] < 0.5
     fr_off = contact[:, 1] < 0.5
     rl_on = contact[:, 2] >= 0.5
     rr_on = contact[:, 3] >= 0.5
 
-    # We only count air time if the rear feet are safely planted!
-    valid_hop = (fl_off & fr_off & rl_on & rr_on)
-
-    # 1. Initialize the custom timer if it doesn't exist yet
-    device = contact.device
-    if not hasattr(env, "_front_air_steps"):
-        env._front_air_steps = torch.zeros(env.num_envs, dtype=torch.float, device=device)
+    valid_feet = fl_off & fr_off & rl_on & rr_on
     
-    # 2. Reset the timer for any environments that died on the last frame
-    reset_buf = getattr(env, "reset_buf", torch.zeros(env.num_envs, dtype=torch.bool, device=device))
-    env._front_air_steps = torch.where(
-        reset_buf, 
-        torch.zeros_like(env._front_air_steps), 
-        env._front_air_steps
-    )
+    # Check if the hips are high enough
+    height = env.scene["robot"].data.body_com_pos_w[:, 0, 2]
+    valid_height = height > min_height
 
-    # 3. Increment the timer if hopping, otherwise slam it back to 0
-    env._front_air_steps = torch.where(
-        valid_hop,
-        env._front_air_steps + 1.0,
-        torch.zeros_like(env._front_air_steps)
-    )
-
-    # 4. Exponential Reward: Square the time held
-    # We divide by 100 first so a 100-step hold equals 1.0 points, 200 steps = 4.0 points, etc.
-    # This prevents the numbers from exploding to infinity.
-    return (env._front_air_steps / 100.0) ** 2
+    # Returns a flat 1.0 per frame only if both conditions are true
+    return (valid_feet & valid_height).float()
 
 
 def front_contact_penalty(env, sensor_name: str) -> torch.Tensor:
