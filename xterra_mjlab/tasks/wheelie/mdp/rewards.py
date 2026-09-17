@@ -21,11 +21,8 @@ def front_wheelie_reward(
     gravity = env.scene["robot"].data.projected_gravity_b
     pitch_raw = gravity[:, 0].clamp(min=0.0, max=target_pitch) / target_pitch
 
-    wheelie_reward = correct_config * pitch_raw
-    pitch_only_reward = pitch_raw * 0.1
-
-
-    return wheelie_reward + pitch_only_reward
+    # No pitch_only_reward - it causes 4-leg tilt exploit
+    return correct_config * pitch_raw
 
 
 def rear_wheelie_reward(
