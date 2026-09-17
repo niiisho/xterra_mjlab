@@ -8,19 +8,22 @@ from xterra_mjlab.tasks.velocity.config.svanm2.env_cfgs import svanm2_flat_env_c
 from xterra_mjlab.tasks.wheelie import mdp as wheelie_mdp
 from xterra_mjlab.tasks.wheelie.mdp.rewards import base_height_too_low
 from xterra_mjlab.tasks.wheelie.mdp.rewards import non_foot_contact_penalty
+from xterra_mjlab.tasks.wheelie.mdp.rewards import front_foot_penalty
 from mjlab.managers.event_manager import EventTermCfg
 from mjlab.sensor import ContactSensorCfg, ContactMatch
 
 def svanm2_front_wheelie_cfg(play: bool = False):
     cfg = svanm2_flat_env_cfg(play=play)
-    
-    # Remove events that override wheelie spawn position
-    cfg.events.pop("reset_base", None)
-    cfg.events.pop("reset_robot_joints", None)
 
 # Remove random pushes during wheelie training
 # Robot needs stable environment to learn balance first
     cfg.events.pop("push_robot", None)
+
+    cfg.rewards["front_foot_penalty"] = RewardTermCfg(
+        func=front_foot_ground_penalty,
+        weight=-3.0,
+        params={"sensor_name": "feet_ground_contact"},
+    )
 
 # Now add our wheelie spawn - nothing will override it
     cfg.events["reset_robot_state"] = EventTermCfg(
@@ -103,9 +106,8 @@ def svanm2_front_wheelie_cfg(play: bool = False):
     )
 
     # Penalty for any non-foot contact - knees, shins, trunk
-    cfg.rewards["non_foot_contact_penalty"] = RewardTermCfg(
-        func=non_foot_contact_penalty,
-        weight=-5.0,
+    cfg.terminations["illegal_contact"] = TerminationTermCfg(
+        func=non_foot_illegal_contact,
         params={
             "shank_sensor_name": "shank_ground_touch",
             "thigh_sensor_name": "thigh_ground_touch",
