@@ -68,6 +68,13 @@ def base_height_too_low(env, min_height: float):
     is_low = env.scene["robot"].data.body_com_pos_w[:, 0, 2] < min_height    
     return is_low
 
+def front_foot_ground_penalty(env, sensor_name: str) -> torch.Tensor:
+    sensor = env.scene.sensors[sensor_name]
+    contact = sensor.data.found.squeeze(-1)
+    fl_on = contact[:, 0] >= 0.5
+    fr_on = contact[:, 1] >= 0.5
+    return (fl_on | fr_on).float()
+
 def non_foot_illegal_contact(
     env,
     shank_sensor_name: str,
