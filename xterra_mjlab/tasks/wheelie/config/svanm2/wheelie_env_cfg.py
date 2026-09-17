@@ -13,6 +13,7 @@ from mjlab.sensor import ContactSensorCfg, ContactMatch
 
 def svanm2_front_wheelie_cfg(play: bool = False):
     cfg = svanm2_flat_env_cfg(play=play)
+    print(cfg.events)
 
     # Add back knee and shin contact sensors removed by flat config
     shank_ground_cfg = ContactSensorCfg(
