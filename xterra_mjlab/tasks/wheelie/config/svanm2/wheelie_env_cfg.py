@@ -85,8 +85,9 @@ def svanm2_front_wheelie_cfg(play: bool = False):
 
     cfg.terminations["base_too_low"] = TerminationTermCfg(
         func=base_height_too_low,
-        params={"min_height": 0.22},
+        params={"min_height": 0.25, "grace_period": 50}, 
     )
+    
     cfg.terminations["sideways_fall"] = TerminationTermCfg(
         func=wheelie_mdp.excessive_roll,
         params={"max_roll": math.radians(45.0)},
