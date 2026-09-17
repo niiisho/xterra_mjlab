@@ -7,6 +7,7 @@ def front_wheelie_reward(
     env,
     sensor_name: str,
     target_pitch: float = 0.5,
+    grace_steps: int = 150,
 ) -> torch.Tensor:
     sensor = env.scene.sensors[sensor_name]
     contact = sensor.data.found.squeeze(-1)
@@ -21,15 +22,14 @@ def front_wheelie_reward(
     gravity = env.scene["robot"].data.projected_gravity_b
     pitch_raw = gravity[:, 0].clamp(min=0.0, max=target_pitch) / target_pitch
 
-    # Full reward only when contact config is correct
     wheelie_reward = correct_config * pitch_raw
-
-    # Small pitch reward always active regardless of foot contact
-    # Teaches robot to tilt before it discovers full wheelie
-    # 0.1 weight means it contributes but doesn't dominate
     pitch_only_reward = pitch_raw * 0.1
 
-    return wheelie_reward + pitch_only_reward
+    # Block all wheelie reward for first grace_steps
+    # Gives robot time to land and stabilize before trying to wheelie
+    past_grace = (env.episode_length_buf >= grace_steps).float()
+
+    return past_grace * (wheelie_reward + pitch_only_reward)
 
 
 def rear_wheelie_reward(
@@ -77,21 +77,18 @@ def non_foot_contact_penalty(
     shank_sensor_name: str,
     thigh_sensor_name: str,
     trunk_sensor_name: str,
+    grace_steps: int = 150,
 ) -> torch.Tensor:
-    """
-    Return 1.0 for any environment where a non-foot body part touches the ground.
-    Applied with negative weight so it becomes a penalty.
-    Catches knee, shin, and trunk contact exploits.
-    """
     shank_contact = env.scene.sensors[shank_sensor_name].data.found
     thigh_contact = env.scene.sensors[thigh_sensor_name].data.found
     trunk_contact = env.scene.sensors[trunk_sensor_name].data.found
 
-    # Any contact in any of these sensors across all legs
     shank_any = shank_contact.any(dim=-1).any(dim=-1)
     thigh_any = thigh_contact.any(dim=-1).any(dim=-1)
     trunk_any = trunk_contact.squeeze(-1).squeeze(-1).bool()
 
     illegal_contact = shank_any | thigh_any | trunk_any
 
-    return illegal_contact.float()
+    past_grace = (env.episode_length_buf >= grace_steps).float()
+
+    return illegal_contact.float() * past_grace
