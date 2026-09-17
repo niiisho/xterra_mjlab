@@ -88,6 +88,29 @@ def svanm2_front_wheelie_cfg(play: bool = False):
         },
     )
 
+    # 1. Keep your base hop reward to encourage pitching up
+    cfg.rewards["front_hop"] = RewardTermCfg(
+        func=wheelie_mdp.front_hop_reward,
+        weight=10.0,
+        params={"sensor_name": "feet_ground_contact", "target_pitch": 0.5},
+    )
+
+# 2. Add the Exponential Air Timer
+# Given a weight of 10.0, sustained air time will quickly become its biggest source of points
+    cfg.rewards["continuous_air"] = RewardTermCfg(
+        func=wheelie_mdp.front_continuous_air_reward,
+        weight=10.0,
+        params={"sensor_name": "feet_ground_contact"},
+    )
+
+# 3. Add the Tapping Penalty
+# -2.0 is enough that violently vibrating its feet on the floor will bleed its score dry
+    cfg.rewards["front_contact_penalty"] = RewardTermCfg(
+        func=wheelie_mdp.front_contact_penalty,
+        weight=-2.0,
+        params={"sensor_name": "feet_ground_contact"},
+    )
+
     return cfg
 
 
