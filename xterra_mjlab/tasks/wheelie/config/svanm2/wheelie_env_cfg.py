@@ -8,6 +8,7 @@ from xterra_mjlab.tasks.velocity.config.svanm2.env_cfgs import svanm2_flat_env_c
 from xterra_mjlab.tasks.wheelie import mdp as wheelie_mdp
 from xterra_mjlab.tasks.wheelie.mdp.rewards import base_height_too_low
 from xterra_mjlab.tasks.wheelie.mdp.rewards import non_foot_contact_penalty
+from mjlab.managers.event_manager import EventTermCfg
 from mjlab.sensor import ContactSensorCfg, ContactMatch
 
 def svanm2_front_wheelie_cfg(play: bool = False):
@@ -92,6 +93,36 @@ def svanm2_front_wheelie_cfg(play: bool = False):
             "thigh_sensor_name": "thigh_ground_touch",
             "trunk_sensor_name": "trunk_ground_touch",
             "grace_steps": 150,
+        },
+    )
+
+    cfg.events["reset_robot_state"] = EventTermCfg(
+        func=wheelie_mdp.reset_to_wheelie_pose,
+        mode="reset",
+        params={
+            "pitch_angle": 0.7,   # ~40 degrees backward
+            "base_height": 0.45,
+        },
+    )
+
+    return cfg
+
+
+def svanm2_front_wheelie_fromflat_cfg(play: bool = False):
+    """
+    Phase 2: robot starts closer to flat ground.
+    Use this after robot has learned to maintain wheelie from tilted start.
+    """
+    cfg = svanm2_front_wheelie_cfg(play=play)
+
+    # Reduce starting pitch significantly
+    # Robot now needs to initiate the wheelie itself
+    cfg.events["reset_robot_state"] = EventTermCfg(
+        func=wheelie_mdp.reset_to_wheelie_pose,
+        mode="reset",
+        params={
+            "pitch_angle": 0.2,   # ~11 degrees - nearly flat
+            "base_height": 0.55,  # closer to normal standing height
         },
     )
 
