@@ -70,3 +70,8 @@ def excessive_roll(env, max_roll: float = 0.785) -> torch.Tensor:
 def base_height_too_low(env, min_height: float):
     # body_com_pos_w = Body Center of Mass Position in World frame
     return env.scene["robot"].data.body_com_pos_w[:, 0, 2] < min_height
+
+def pitch_too_flat(env, min_pitch: float):
+    gravity = env.scene["robot"].data.projected_gravity_b
+    pitch_raw = gravity[:, 0]
+    return pitch_raw < min_pitch
