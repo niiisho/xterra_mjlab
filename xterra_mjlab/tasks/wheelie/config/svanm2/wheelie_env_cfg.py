@@ -6,7 +6,7 @@ from mjlab.managers.reward_manager import RewardTermCfg
 
 from xterra_mjlab.tasks.velocity.config.svanm2.env_cfgs import svanm2_flat_env_cfg
 from xterra_mjlab.tasks.wheelie import mdp as wheelie_mdp
-
+from xterra_mjlab.tasks.wheelie.mdp.rewards import base_height_too_low
 
 def svanm2_front_wheelie_cfg(play: bool = False):
     cfg = svanm2_flat_env_cfg(play=play)
@@ -34,7 +34,7 @@ def svanm2_front_wheelie_cfg(play: bool = False):
     cfg.terminations.pop("fell_over", None)
 
     cfg.terminations["base_too_low"] = TerminationTermCfg(
-        func=wheelie_mdp.base_height_too_low,
+        func=base_height_too_low,
         params={"min_height": 0.25}, # If the torso drops below 25cm, terminate!
     )
 
