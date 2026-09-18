@@ -7,6 +7,7 @@ from .rewards import (
     front_contact_penalty,
     base_height_penalty,
     yaw_rate_penalty,
-    out_of_bounds,
+    front_symmetry_penalty,
+    forward_velocity_reward,
 )
 from .events import reset_to_wheelie_pose
