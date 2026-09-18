@@ -88,8 +88,8 @@ def front_contact_penalty(env, sensor_name: str, grace_period: int = 50) -> torc
     fl_on = contact[:, 0] >= 0.5
     fr_on = contact[:, 1] >= 0.5
     
-    # Returns 1.0 if either front foot touches the ground
-    return (fl_on | fr_on).float()
+    past_grace = env.episode_length_buf > grace_period
+    return (fl_on | fr_on) & past_grace
 
 def base_height_penalty(env, penalty_threshold: float) -> torch.Tensor:
     height = env.scene["robot"].data.body_com_pos_w[:, 0, 2]
@@ -113,6 +113,6 @@ def front_symmetry_penalty(env) -> torch.Tensor:
     
     return symmetry_error
 
-def forward_velocity_reward(env) -> torch.Tensor:!
+def forward_velocity_reward(env) -> torch.Tensor:
     forward_vel = env.scene["robot"].data.root_lin_vel_w[:, 0]
     return forward_vel
