@@ -24,7 +24,7 @@ def svanm2_front_wheelie_cfg(play: bool = False):
         func=wheelie_mdp.reset_to_wheelie_pose,
         mode="reset",
         params={
-            "pitch_angle": 0,  # THE FIX: Negative pitches backward onto rear legs!
+            "pitch_angle": -0.6,  # THE FIX: Negative pitches backward onto rear legs!
             "base_height": 0.45,
         },
     )
