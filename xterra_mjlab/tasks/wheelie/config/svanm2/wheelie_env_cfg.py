@@ -109,7 +109,7 @@ def svanm2_front_wheelie_cfg(play: bool = False):
         },
     )
 
-    cfg.terminations["front_contact_penalty"] = RewardTermCfg(
+    cfg.terminations["front_contact_penalty"] = TerminationTermCfg(
         func=wheelie_mdp.front_contact_penalty,
         params={"sensor_name": "feet_ground_contact", "grace_period": 50},
     )
