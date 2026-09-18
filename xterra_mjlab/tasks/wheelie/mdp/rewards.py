@@ -34,7 +34,7 @@ def excessive_roll(env, max_roll: float = 0.785) -> torch.Tensor:
     return roll_signal > max_roll
 
 
-def base_height_too_low(env, min_height: float, grace_period: int = 100):
+def base_height_too_low(env, min_height: float, grace_period: int = 50):
     is_low = env.scene["robot"].data.body_com_pos_w[:, 0, 2] < min_height
     past_grace = env.episode_length_buf > grace_period
     
@@ -81,7 +81,7 @@ def front_air_height_reward(
     return (valid_feet & valid_height).float()
 
 
-def front_contact_penalty(env, sensor_name: str) -> torch.Tensor:
+def front_contact_penalty(env, sensor_name: str, grace_period: int = 50) -> torch.Tensor:
     sensor = env.scene.sensors[sensor_name]
     contact = sensor.data.found.squeeze(-1)
     
