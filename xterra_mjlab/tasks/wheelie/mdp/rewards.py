@@ -100,7 +100,7 @@ def base_height_penalty(env, penalty_threshold: float) -> torch.Tensor:
 
 def yaw_rate_penalty(env) -> torch.Tensor:
     # body_ang_vel_w shape is [envs, bodies, axes]
-    ang_vel = env.scene["robot"].data.body_ang_vel_w
+    ang_vel = env.scene["robot"].data.root_ang_vel_w
     yaw_rate = ang_vel[:, 0, 2]
     
     return yaw_rate.abs()
