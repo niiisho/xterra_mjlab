@@ -20,15 +20,6 @@ def svanm2_front_wheelie_cfg(play: bool = False):
     cfg.events.pop("push_robot", None)
     cfg.events.pop("reset_robot_state", None)
 
-    cfg.events["reset_robot_state"] = EventTermCfg(
-        func=wheelie_mdp.reset_to_wheelie_pose,
-        mode="reset",
-        params={
-            "pitch_angle": -0.4,  # THE FIX: Negative pitches backward onto rear legs!
-            "base_height": 0.45,
-        },
-    )
-
     # 2. SENSORS (Only checking Thighs and Trunk against any ground surface)
     thigh_ground_cfg = ContactSensorCfg(
         name="thigh_ground_touch",
@@ -124,9 +115,9 @@ def svanm2_front_wheelie_cfg(play: bool = False):
         params={"sensor_name": "feet_ground_contact"},
     )
 
-    cfg.rewards["front_symmetry"] = RewardTermCfg(
-        func=wheelie_mdp.front_symmetry_penalty,
-        weight=-0.5,  
+    cfg.terminations["out_of_bounds"] = TerminationTermCfg(
+        func=wheelie_mdp.out_of_bounds,
+        params={"max_radius": 1.0}, 
     )
 
     cfg.rewards["yaw_rate"] = RewardTermCfg(
