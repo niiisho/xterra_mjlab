@@ -104,8 +104,15 @@ def yaw_rate_penalty(env) -> torch.Tensor:
     yaw_rate = ang_vel[:, 0, 2]
     return yaw_rate.abs()
 
-def out_of_bounds(env, max_radius: float) -> torch.Tensor:
-    # [:, 0, :2] means: All Envs (:), Base Body (0), and X,Y axes (0 and 1)
-    xy_pos = env.scene["robot"].data.body_com_pos_w[:, 0, :2]
-    distance = torch.norm(xy_pos, dim=1)
-    return distance > max_radius
+def front_symmetry_penalty(env) -> torch.Tensor:
+    joint_pos = env.scene["robot"].data.joint_pos
+    fl_joints = joint_pos[:, 0:3]
+    fr_joints = joint_pos[:, 3:6]
+    
+    symmetry_error = torch.sum(torch.square(fl_joints - fr_joints), dim=1)
+    
+    return symmetry_error
+
+def forward_velocity_reward(env) -> torch.Tensor:!
+    forward_vel = env.scene["robot"].data.root_lin_vel_w[:, 0]
+    return forward_vel
