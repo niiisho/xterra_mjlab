@@ -97,4 +97,22 @@ def base_height_penalty(env, penalty_threshold: float) -> torch.Tensor:
     # Check if the robot's hips have dropped into the warning zone
     is_low = height < penalty_threshold
     return (is_low).float()
+
+def yaw_rate_penalty(env) -> torch.Tensor:
+    ang_vel = env.scene["robot"].data.root_ang_vel_b
+    return ang_vel[:, 2].abs()
+
+def front_symmetry_penalty(env) -> torch.Tensor:
+    # Get the angles of all 12 joints
+    joint_pos = env.scene["robot"].data.joint_pos
     
+    # In standard quadruped models (like SvanM2), the first 6 joints belong to the front legs
+    # FL = indices 0, 1, 2 | FR = indices 3, 4, 5
+    fl_joints = joint_pos[:, 0:3]
+    fr_joints = joint_pos[:, 3:6]
+    
+    # Calculate the squared difference between the left and right front joints
+    # The more asymmetrical the arms, the larger this number gets
+    symmetry_error = torch.sum(torch.square(fl_joints - fr_joints), dim=1)
+    
+    return symmetry_error
