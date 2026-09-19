@@ -119,14 +119,18 @@ def svanm2_front_wheelie_cfg(play: bool = False):
         weight=-0.5,  
     )
 
-    cfg.rewards["yaw_rate"] = RewardTermCfg(
-        func=wheelie_mdp.yaw_rate_penalty,
-        weight=-1,  
-    )
-
     cfg.rewards["forward_drive"] = RewardTermCfg(
         func=wheelie_mdp.forward_velocity_reward,
         weight=5,  
+    )
+
+    cfg.rewards["min_velocity"] = RewardTermCfg(
+        func=wheelie_mdp.min_velocity_penalty,
+        weight=-3.0,
+        params={
+            "min_vel": 0.5,
+            "grace_period": 50,
+        },
     )
 
     cfg.terminations["tunnel_boundary"] = TerminationTermCfg(
