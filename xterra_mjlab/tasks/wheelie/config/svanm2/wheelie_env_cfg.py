@@ -114,6 +114,11 @@ def svanm2_front_wheelie_cfg(play: bool = False):
         params={"sensor_name": "feet_ground_contact", "grace_period": 50},
     )
 
+    cfg.rewards["front_symmetry"] = RewardTermCfg(
+        func=wheelie_mdp.front_symmetry_penalty,
+        weight=-0.5,  
+    )
+
     cfg.rewards["yaw_rate"] = RewardTermCfg(
         func=wheelie_mdp.yaw_rate_penalty,
         weight=-1,  
