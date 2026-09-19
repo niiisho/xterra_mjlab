@@ -122,3 +122,9 @@ def forward_velocity_reward(env) -> torch.Tensor:
 def lateral_out_of_bounds(env, max_drift: float) -> torch.Tensor:
     y_pos = env.scene["robot"].data.body_com_pos_w[:, 0, 1]
     return y_pos.abs() > max_drift
+
+def min_velocity_penalty(env, min_vel: float = 0.1, grace_period: int = 50) -> torch.Tensor:
+    forward_vel = env.scene["robot"].data.root_link_vel_w[:, 0]
+    too_slow = forward_vel < min_vel
+    past_grace = env.episode_length_buf > grace_period
+    return (too_slow & past_grace).float()
