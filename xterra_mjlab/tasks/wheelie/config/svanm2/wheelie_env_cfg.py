@@ -105,7 +105,7 @@ def svanm2_front_wheelie_cfg(play: bool = False):
         weight=5.0,  # A flat 5.0 points per frame if it holds the high wheelie
         params={
             "sensor_name": "feet_ground_contact",
-            "min_height": 0.45
+            "min_height": 0.42
         },
     )
 
@@ -126,7 +126,7 @@ def svanm2_front_wheelie_cfg(play: bool = False):
 
     cfg.rewards["forward_drive"] = RewardTermCfg(
         func=wheelie_mdp.forward_velocity_reward,
-        weight=3,  
+        weight=5,  
     )
 
     cfg.terminations["tunnel_boundary"] = TerminationTermCfg(
