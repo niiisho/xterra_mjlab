@@ -10,5 +10,6 @@ from .rewards import (
     front_symmetry_penalty,
     forward_velocity_reward,
     lateral_out_of_bounds,
+    min_velocity_penalty,
 )
 from .events import reset_to_wheelie_pose
