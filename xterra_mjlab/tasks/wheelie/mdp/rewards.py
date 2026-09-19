@@ -114,5 +114,5 @@ def front_symmetry_penalty(env) -> torch.Tensor:
     return symmetry_error
 
 def forward_velocity_reward(env) -> torch.Tensor:
-    forward_vel = env.scene["robot"].data.root_lin_vel_w[:, 0]
+    forward_vel = env.scene["robot"].data.root_link_vel_w[:, 0]
     return forward_vel
