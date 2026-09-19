@@ -72,8 +72,8 @@ def svanm2_front_wheelie_cfg(play: bool = False):
     cfg.terminations["base_too_low"] = TerminationTermCfg(
         func=wheelie_mdp.base_height_too_low,
         params={
-            "min_height": 0.34,
-            "grace_period": 20
+            "min_height": 0.32,
+            "grace_period": 30
         },
     )
     
@@ -96,7 +96,7 @@ def svanm2_front_wheelie_cfg(play: bool = False):
         func=wheelie_mdp.base_height_penalty,
         weight=-2.0,
         params={
-            "penalty_threshold": 0.38,
+            "penalty_threshold": 0.35,
         },
     )
 
@@ -111,12 +111,7 @@ def svanm2_front_wheelie_cfg(play: bool = False):
 
     cfg.terminations["front_contact_penalty"] = TerminationTermCfg(
         func=wheelie_mdp.front_contact_penalty,
-        params={"sensor_name": "feet_ground_contact", "grace_period": 20},
-    )
-
-    cfg.terminations["tunnel_boundary"] = TerminationTermCfg(
-        func=wheelie_mdp.lateral_out_of_bounds,
-        params={"max_drift": 0.5}, 
+        params={"sensor_name": "feet_ground_contact", "grace_period": 22},
     )
 
     cfg.rewards["front_symmetry"] = RewardTermCfg(
@@ -131,7 +126,7 @@ def svanm2_front_wheelie_cfg(play: bool = False):
 
     cfg.rewards["forward_drive"] = RewardTermCfg(
         func=wheelie_mdp.forward_velocity_reward,
-        weight=2.5,  
+        weight=3,  
     )
     
     return cfg
