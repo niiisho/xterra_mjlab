@@ -128,6 +128,11 @@ def svanm2_front_wheelie_cfg(play: bool = False):
         func=wheelie_mdp.forward_velocity_reward,
         weight=3,  
     )
+
+    cfg.terminations["tunnel_boundary"] = TerminationTermCfg(
+        func=wheelie_mdp.lateral_out_of_bounds,
+        params={"max_drift": 0.5}, 
+    )
     
     return cfg
 
