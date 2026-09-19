@@ -116,3 +116,7 @@ def front_symmetry_penalty(env) -> torch.Tensor:
 def forward_velocity_reward(env) -> torch.Tensor:
     forward_vel = env.scene["robot"].data.root_link_vel_w[:, 0]
     return forward_vel
+
+def lateral_out_of_bounds(env, max_drift: float) -> torch.Tensor:
+    y_pos = env.scene["robot"].data.body_com_pos_w[:, 0, 1]
+    return y_pos.abs() > max_drift
