@@ -77,8 +77,10 @@ def front_air_height_reward(
     height = env.scene["robot"].data.body_com_pos_w[:, 0, 2]
     valid_height = height > min_height
 
-    # Returns a flat 1.0 per frame only if both conditions are true
-    return (valid_feet & valid_height).float()
+    forward_vel = env.scene["robot"].data.root_link_vel_w[:, 0]
+    vel_multiplier = torch.clamp(forward_vel / 0.3, min=0.0, max=1.0)
+
+    return (valid_feet & valid_height).float() * vel_multiplier
 
 
 def front_contact_penalty(env, sensor_name: str, grace_period: int = 50) -> torch.Tensor:
