@@ -16,7 +16,7 @@ def front_wheelie_reward(
     rr_on = contact[:, 3] >= 0.5
 
     # REQUIREMENT: Both rear legs MUST be glued to the ground to get any points
-    rear_planted = (rl_on & rr_on).float()
+    rear_planted = (rl_on | rr_on).float()
 
     # BONUS: Did it successfully lift the front legs?
     front_lifted = (fl_off & fr_off).float()
@@ -71,7 +71,7 @@ def front_air_height_reward(
     rl_on = contact[:, 2] >= 0.5
     rr_on = contact[:, 3] >= 0.5
 
-    valid_feet = fl_off & fr_off & rl_on & rr_on
+    valid_feet = fl_off & fr_off & (rl_on | rr_on)
     
     # Check if the hips are high enough
     height = env.scene["robot"].data.body_com_pos_w[:, 0, 2]
