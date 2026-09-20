@@ -139,3 +139,23 @@ def rear_knee_posture_penalty(env, target_calf: float = 1.0) -> torch.Tensor:
     rr_error = torch.square(rr_calf - target_calf)
     
     return rl_error + rr_error
+
+
+def front_leg_direction_penalty(
+    env,
+    min_thigh: float = 0.0,
+    grace_period: int = 50
+) -> torch.Tensor:
+    joint_pos = env.scene["robot"].data.joint_pos
+
+    fl_thigh = joint_pos[:, 1]  # FL_thigh_joint
+    fr_thigh = joint_pos[:, 4]  # FR_thigh_joint
+
+    # Penalize only when thigh goes below min_thigh
+    # clamp means no penalty when above threshold, penalty scales with how far below
+    fl_wrong = torch.clamp(min_thigh - fl_thigh, min=0.0)
+    fr_wrong = torch.clamp(min_thigh - fr_thigh, min=0.0)
+
+    past_grace = (env.episode_length_buf > grace_period).float()
+
+    return (fl_wrong + fr_wrong) * past_grace
