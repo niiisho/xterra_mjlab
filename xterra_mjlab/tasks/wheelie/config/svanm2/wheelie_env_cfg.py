@@ -137,6 +137,12 @@ def svanm2_front_wheelie_cfg(play: bool = False):
         func=wheelie_mdp.lateral_out_of_bounds,
         params={"max_drift": 0.8}, 
     )
+
+    cfg.rewards["rear_knee_posture"] = RewardTermCfg(
+        func=wheelie_mdp.rear_knee_posture_penalty,
+        weight=-1.0,
+        params={"target_calf": 1.0}, # Adjust sign if your URDF bends the other way 
+    )
     
     return cfg
 
