@@ -128,3 +128,14 @@ def min_velocity_penalty(env, min_vel: float = 0.1, grace_period: int = 50) -> t
     too_slow = forward_vel < min_vel
     past_grace = env.episode_length_buf > grace_period
     return (too_slow & past_grace).float()
+
+def rear_knee_posture_penalty(env, target_calf: float = 1.0) -> torch.Tensor:
+    joint_pos = env.scene["robot"].data.joint_pos
+    
+    rl_calf = joint_pos[:, 8]
+    rr_calf = joint_pos[:, 11]
+    
+    rl_error = torch.square(rl_calf - target_calf)
+    rr_error = torch.square(rr_calf - target_calf)
+    
+    return rl_error + rr_error
