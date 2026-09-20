@@ -128,7 +128,7 @@ def svanm2_front_wheelie_cfg(play: bool = False):
         func=wheelie_mdp.min_velocity_penalty,
         weight=-3.0,
         params={
-            "min_vel": 0.5,
+            "min_vel": 0.1,
             "grace_period": 50,
         },
     )
