@@ -65,6 +65,15 @@ def svanm2_front_wheelie_cfg(play: bool = False):
 
     cfg.terminations.pop("fell_over", None)
 
+    cfg.rewards["track_linear_velocity"] = RewardTermCfg(
+        func=wheelie_mdp.track_lin_vel_xy_exp, # Or the built-in track function
+        weight=5.0,  # Massively increased from default
+    )
+    cfg.rewards["track_angular_velocity"] = RewardTermCfg(
+        func=wheelie_mdp.track_ang_vel_z_exp,
+        weight=5.0,
+    )
+
     # 4. STRICT TERMINATIONS
     cfg.terminations["illegal_contact"] = TerminationTermCfg(
         func=wheelie_mdp.illegal_contact_fall,
