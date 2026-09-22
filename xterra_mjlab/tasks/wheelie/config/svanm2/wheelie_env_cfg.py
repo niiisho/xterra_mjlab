@@ -42,6 +42,10 @@ def svanm2_front_wheelie_cfg(play: bool = False):
 
     
     cfg.curriculum.clear()
+
+    # 4. OVERRIDE EXISTING WEIGHTS DIRECTLY
+    cfg.rewards["track_linear_velocity"].weight = 5.0
+    cfg.rewards["track_angular_velocity"].weight = 5.0
     
     # Safely configure velocity limits if the command exists
     for cmd_name in ["velocity", "base_velocity", "ee_pose"]:
