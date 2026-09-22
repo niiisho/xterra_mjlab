@@ -40,17 +40,17 @@ def svanm2_front_wheelie_cfg(play: bool = False):
 
     cfg.scene.sensors = (cfg.scene.sensors or ()) + (thigh_ground_cfg, trunk_ground_cfg)
 
-    # 3. CLEANUP LOCOMOTION TASKS
-    # 3. COMMANDS AND OBSERVATIONS
+    
     cfg.curriculum.clear()
     
-    # Do NOT clear commands or observations anymore! 
-    # Instead, we just override the base 4-legged speed limits to be safer for the 2-legged wheelie:
-    cfg.commands["velocity"].rel_command_limit = (
-        (-0.5, 0.5),  # Forward/Backward limits (m/s)
-        (-0.3, 0.3),  # Sideways limits (m/s)
-        (-1.0, 1.0),  # Turning/Yaw limits (rad/s)
-    )
+    # Safely configure velocity limits if the command exists
+    for cmd_name in ["velocity", "base_velocity", "ee_pose"]:
+        if cmd_name in cfg.commands:
+            cfg.commands[cmd_name].rel_command_limit = (
+                (-0.5, 0.5),  # Forward/Backward limits (m/s)
+                (-0.3, 0.3),  # Sideways limits (m/s)
+                (-1.0, 1.0),  # Turning/Yaw limits (rad/s)
+            )
 
     # We removed 'track_linear_velocity' and 'track_angular_velocity' from this list 
     # so the base environment's tracking rewards are kept active!
