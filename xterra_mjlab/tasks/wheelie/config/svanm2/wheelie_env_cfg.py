@@ -41,14 +41,20 @@ def svanm2_front_wheelie_cfg(play: bool = False):
     cfg.scene.sensors = (cfg.scene.sensors or ()) + (thigh_ground_cfg, trunk_ground_cfg)
 
     # 3. CLEANUP LOCOMOTION TASKS
-    cfg.commands.clear()
+    # 3. COMMANDS AND OBSERVATIONS
     cfg.curriculum.clear()
-    cfg.observations["actor"].terms.pop("command", None)
-    cfg.observations["critic"].terms.pop("command", None)
+    
+    # Do NOT clear commands or observations anymore! 
+    # Instead, we just override the base 4-legged speed limits to be safer for the 2-legged wheelie:
+    cfg.commands["velocity"].rel_command_limit = (
+        (-0.5, 0.5),  # Forward/Backward limits (m/s)
+        (-0.3, 0.3),  # Sideways limits (m/s)
+        (-1.0, 1.0),  # Turning/Yaw limits (rad/s)
+    )
 
+    # We removed 'track_linear_velocity' and 'track_angular_velocity' from this list 
+    # so the base environment's tracking rewards are kept active!
     for key in [
-        "track_linear_velocity",
-        "track_angular_velocity",
         "air_time",
         "foot_clearance",
         "pose",
@@ -117,25 +123,6 @@ def svanm2_front_wheelie_cfg(play: bool = False):
     cfg.rewards["front_symmetry"] = RewardTermCfg(
         func=wheelie_mdp.front_symmetry_penalty,
         weight=-0.5,  
-    )
-
-    cfg.rewards["forward_drive"] = RewardTermCfg(
-        func=wheelie_mdp.forward_velocity_reward,
-        weight=5,  
-    )
-
-    cfg.rewards["min_velocity"] = RewardTermCfg(
-        func=wheelie_mdp.min_velocity_penalty,
-        weight=-3.0,
-        params={
-            "min_vel": 0.1,
-            "grace_period": 50,
-        },
-    )
-
-    cfg.terminations["tunnel_boundary"] = TerminationTermCfg(
-        func=wheelie_mdp.lateral_out_of_bounds,
-        params={"max_drift": 1.0}, 
     )
 
     cfg.rewards["rear_knee_posture"] = RewardTermCfg(
