@@ -45,8 +45,8 @@ def svanm2_front_wheelie_cfg(play: bool = False):
     cfg.curriculum.clear()
 
     # 4. OVERRIDE EXISTING WEIGHTS DIRECTLY
-    cfg.rewards["track_linear_velocity"].weight = 20.0
-    cfg.rewards["track_angular_velocity"].weight = 10.0
+    cfg.rewards["track_linear_velocity"].weight = 10.0
+    cfg.rewards["track_angular_velocity"].weight = 5.0
     
     # Safely configure velocity limits if the command exists
     for cmd_name in ["velocity", "base_velocity", "ee_pose"]:
@@ -83,7 +83,7 @@ def svanm2_front_wheelie_cfg(play: bool = False):
     cfg.terminations["base_too_low"] = TerminationTermCfg(
         func=wheelie_mdp.base_height_too_low,
         params={
-            "min_height": 0.34,
+            "min_height": 0.38,
             "grace_period": 30
         },
     )
@@ -107,7 +107,7 @@ def svanm2_front_wheelie_cfg(play: bool = False):
         func=wheelie_mdp.base_height_penalty,
         weight=-2.0,
         params={
-            "penalty_threshold": 0.38,
+            "penalty_threshold": 0.42,
         },
     )
 
@@ -116,7 +116,7 @@ def svanm2_front_wheelie_cfg(play: bool = False):
         weight=5.0,  # A flat 5.0 points per frame if it holds the high wheelie
         params={
             "sensor_name": "feet_ground_contact",
-            "min_height": 0.42
+            "min_height": 0.43
         },
     )
 
