@@ -23,12 +23,13 @@ def svanm2_front_wheelie_cfg(play: bool = False):
     # 2. SENSORS (Only checking Thighs and Trunk against any ground surface)
     thigh_ground_cfg = ContactSensorCfg(
         name="thigh_ground_touch",
-        primary=ContactMatch(mode="body", entity="robot", pattern="(FL|FR|RL|RR)_thigh_link"),
+        primary=ContactMatch(mode="body", entity="robot", pattern="(FL|FR|RL|RR)_(thigh|calf)_link"),
         secondary=ContactMatch(mode="body", pattern="terrain"), 
         fields=("found",),
         reduce="none",
         num_slots=1,
     )
+    
     trunk_ground_cfg = ContactSensorCfg(
         name="trunk_ground_touch",
         primary=ContactMatch(mode="body", entity="robot", pattern="base"),
