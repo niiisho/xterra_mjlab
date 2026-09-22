@@ -159,3 +159,15 @@ def front_leg_direction_penalty(
     past_grace = (env.episode_length_buf > grace_period).float()
 
     return (fl_wrong + fr_wrong) * past_grace
+
+
+def track_lin_vel_xy_exp(env, std: float = 0.5) -> torch.Tensor:
+    # Get actual X and Y velocity
+    actual_vel = env.scene["robot"].data.root_link_vel_w[:, :2] 
+    
+    # Get the current joystick target
+    target_vel = env.command_manager.get_command("velocity")[:, :2]
+    
+    # Calculate the squared error and convert to an exponential reward (0.0 to 1.0)
+    error = torch.sum(torch.square(target_vel - actual_vel), dim=1)
+    return torch.exp(-error / std**2)
