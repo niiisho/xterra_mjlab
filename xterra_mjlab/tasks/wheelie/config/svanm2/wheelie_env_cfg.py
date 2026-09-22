@@ -65,11 +65,6 @@ def svanm2_front_wheelie_cfg(play: bool = False):
 
     cfg.terminations.pop("fell_over", None)
 
-    cfg.rewards["track_linear_velocity"] = RewardTermCfg(
-        func=wheelie_mdp.track_lin_vel_xy_exp, # Or the built-in track function
-        weight=5.0,  # Massively increased from default
-    )
-
     # 4. STRICT TERMINATIONS
     cfg.terminations["illegal_contact"] = TerminationTermCfg(
         func=wheelie_mdp.illegal_contact_fall,
@@ -107,7 +102,7 @@ def svanm2_front_wheelie_cfg(play: bool = False):
         func=wheelie_mdp.base_height_penalty,
         weight=-2.0,
         params={
-            "penalty_threshold": 0.36,
+            "penalty_threshold": 0.35,
         },
     )
 
@@ -116,7 +111,7 @@ def svanm2_front_wheelie_cfg(play: bool = False):
         weight=5.0,  # A flat 5.0 points per frame if it holds the high wheelie
         params={
             "sensor_name": "feet_ground_contact",
-            "min_height": 0.4
+            "min_height": 0.37
         },
     )
 
