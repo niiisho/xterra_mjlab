@@ -47,8 +47,8 @@ def svanm2_front_wheelie_cfg(play: bool = False):
     for cmd_name in ["velocity", "base_velocity", "ee_pose"]:
         if cmd_name in cfg.commands:
             cfg.commands[cmd_name].rel_command_limit = (
-                (-0.5, 0.5),  # Forward/Backward limits (m/s)
-                (-0.3, 0.3),  # Sideways limits (m/s)
+                (-0.5, 1),  # Forward/Backward limits (m/s)
+                (-0.5, 0.5),  # Sideways limits (m/s)
                 (-1.0, 1.0),  # Turning/Yaw limits (rad/s)
             )
 
@@ -78,7 +78,7 @@ def svanm2_front_wheelie_cfg(play: bool = False):
     cfg.terminations["base_too_low"] = TerminationTermCfg(
         func=wheelie_mdp.base_height_too_low,
         params={
-            "min_height": 0.27,
+            "min_height": 0.3,
             "grace_period": 30
         },
     )
@@ -102,7 +102,7 @@ def svanm2_front_wheelie_cfg(play: bool = False):
         func=wheelie_mdp.base_height_penalty,
         weight=-2.0,
         params={
-            "penalty_threshold": 0.32,
+            "penalty_threshold": 0.36,
         },
     )
 
@@ -111,7 +111,7 @@ def svanm2_front_wheelie_cfg(play: bool = False):
         weight=5.0,  # A flat 5.0 points per frame if it holds the high wheelie
         params={
             "sensor_name": "feet_ground_contact",
-            "min_height": 0.36
+            "min_height": 0.4
         },
     )
 
