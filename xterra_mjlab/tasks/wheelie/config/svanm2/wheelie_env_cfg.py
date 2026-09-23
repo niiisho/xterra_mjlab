@@ -16,6 +16,8 @@ from mjlab.terrains.heightfield_terrains import HfDiscreteObstaclesTerrainCfg #[
 from xterra_mjlab.tasks.velocity.config.svanm2.env_cfgs import svanm2_flat_env_cfg
 from xterra_mjlab.tasks.wheelie import mdp as wheelie_mdp
 from mjlab.managers.event_manager import EventTermCfg
+from mjlab.terrains.heightfield_terrains import HfPyramidSlopedTerrainCfg
+from mjlab.envs.mdp.observations import height_scan
 
 def svanm2_front_wheelie_cfg(play: bool = False):
     cfg = svanm2_flat_env_cfg(play=play)
@@ -174,33 +176,38 @@ def svanm2_rear_wheelie_cfg(play: bool = False):
 def svanm2_wheelie_stairs_cfg(play: bool = False):
     cfg = svanm2_flat_env_cfg(play=play)
 
-    # 1. TERRAIN GENERATOR[cite: 10]
-    # Using HfDiscreteObstaclesTerrainCfg to create blocky steps since a dedicated stairs class is missing[cite: 9, 10]
-    cfg.scene.terrain = TerrainGeneratorCfg(
-        curriculum=True, # Difficulty increases along rows[cite: 10]
-        size=(10.0, 10.0), #[cite: 10]
-        sub_terrains={
-            "steps": HfDiscreteObstaclesTerrainCfg(
-                obstacle_height_mode="fixed", #[cite: 9]
-                obstacle_height_range=(0.05, 0.15), # 5cm to 15cm steps[cite: 9]
-                obstacle_width_range=(0.3, 0.5), #[cite: 9]
-                num_obstacles=30, #[cite: 9]
-                platform_width=1.0, #[cite: 9]
-            )
-        }
-    )
+    # 1. TERRAIN GENERATOR: The "Swimming Pool" Stairs
+    if hasattr(cfg.scene, "terrain"):
+        # Tell the high-level scene to use a procedural generator
+        cfg.scene.terrain.terrain_type = "generator" 
+        
+        # Inject our specific stair settings into the generator attribute
+        cfg.scene.terrain.terrain_generator = TerrainGeneratorCfg(
+            curriculum=True, 
+            size=(12.0, 12.0), 
+            sub_terrains={
+                "pool_stairs": HfPyramidSlopedTerrainCfg(
+                    inverted=True,          
+                    platform_width=2.0,     
+                    slope_range=(0.5, 0.5), 
+                    horizontal_scale=0.1,   
+                    vertical_scale=0.1,     
+                )
+            }
+        )
 
-    # 2. EXTEROCEPTION (Height Scanners) 
-    # Adding a raycast grid pattern around the robot's base[cite: 4, 6]
+    # 2. EXTEROCEPTION (Height Scanners) with Visualization enabled
     height_scanner_cfg = TerrainHeightSensorCfg(
         name="base_height_scan", #[cite: 6]
-        frame=ObjRef(type="body", name="base"), #[cite: 4]
+        # ADDED entity="robot" HERE:
+        frame=ObjRef(type="body", name="base", entity="robot"), #[cite: 1, 4]
         pattern=GridPatternCfg(
-            size=(1.0, 1.0), # Grid size (length, width) in meters[cite: 4]
-            resolution=0.1, # Spacing between rays[cite: 4]
+            size=(1.5, 1.5), #[cite: 4]
+            resolution=0.1,  #[cite: 4]
             direction=(0.0, 0.0, -1.0) #[cite: 4]
         ),
-        max_distance=2.0 #[cite: 4]
+        max_distance=2.0, #[cite: 4]
+        debug_vis=True #[cite: 4]
     )
 
     # 3. CONTACT SENSORS (With Calf/Shank Regex)[cite: 3]
@@ -237,7 +244,7 @@ def svanm2_wheelie_stairs_cfg(play: bool = False):
 
     # Use the height_scan MDP function to read the base_height_scan sensor
     cfg.observations["actor"].terms["height_scan"] = ObservationTermCfg(
-        func=wheelie_mdp.height_scan,
+        func=height_scan,
         params={"sensor_name": "base_height_scan"}
     )
     cfg.observations["critic"].terms["height_scan"] = cfg.observations["actor"].terms["height_scan"]
