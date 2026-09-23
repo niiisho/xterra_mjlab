@@ -19,6 +19,78 @@ from mjlab.managers.event_manager import EventTermCfg
 from mjlab.terrains.heightfield_terrains import HfPyramidSlopedTerrainCfg
 from mjlab.envs.mdp.observations import height_scan
 
+import uuid
+import numpy as np
+import mujoco
+from dataclasses import dataclass
+from mjlab.terrains.terrain_generator import SubTerrainCfg, TerrainOutput, TerrainGeometry #[cite: 10]
+from mjlab.terrains.heightfield_terrains import color_by_height #[cite: 9]
+
+@dataclass(kw_only=True)
+class HfSquareStairsCfg(SubTerrainCfg): #[cite: 10]
+    step_height: float = 0.05
+    step_run: float = 0.5
+    platform_radius: float = 1.5  # Creates a 3m x 3m flat spawn area in the center
+    horizontal_scale: float = 0.1
+    vertical_scale: float = 0.005
+    
+    def function(self, difficulty: float, spec: mujoco.MjSpec, rng: np.random.Generator) -> TerrainOutput: #[cite: 10]
+        width_px = int(self.size[0] / self.horizontal_scale)
+        length_px = int(self.size[1] / self.horizontal_scale)
+        
+        height_units = int(self.step_height / self.vertical_scale)
+        
+        # Find the exact pixel center
+        cx = width_px // 2
+        cy = length_px // 2
+        
+        # Create a 2D grid of coordinates using numpy for fast math
+        x = np.arange(width_px)
+        y = np.arange(length_px)
+        xx, yy = np.meshgrid(x, y, indexing="ij")
+        
+        # Calculate physical distance from the center on both axes
+        dx = np.abs(xx - cx) * self.horizontal_scale
+        dy = np.abs(yy - cy) * self.horizontal_scale
+        
+        # The maximum distance determines the concentric square shapes
+        dist = np.maximum(dx, dy)
+        
+        # Mask out the center platform to be perfectly flat
+        flat_mask = dist < self.platform_radius
+        
+        # Calculate step indices for the remaining area
+        step_idx = ((dist - self.platform_radius) // self.step_run).astype(np.int16) + 1
+        
+        # Apply heights: 0 for the center, calculated stairs everywhere else
+        noise = np.where(flat_mask, 0, step_idx * height_units).astype(np.int16)
+        
+        elevation_range = np.max(noise) if np.max(noise) > 0 else 1
+        max_height = elevation_range * self.vertical_scale
+        normalized_elevation = (noise / elevation_range).astype(np.float32)
+        
+        unique_id = uuid.uuid4().hex
+        field = spec.add_hfield(
+            name=f"hfield_{unique_id}",
+            size=[self.size[0]/2, self.size[1]/2, max_height, 0.1], #[cite: 9]
+            nrow=noise.shape[0], ncol=noise.shape[1],
+            userdata=normalized_elevation.flatten().tolist(),
+        )
+        
+        physical_heights = normalized_elevation * max_height
+        material_name = color_by_height(spec, noise, unique_id, physical_heights) #[cite: 9]
+        
+        geom = spec.body("terrain").add_geom(
+            type=mujoco.mjtGeom.mjGEOM_HFIELD,
+            hfieldname=field.name,
+            pos=[self.size[0]/2, self.size[1]/2, 0],
+            material=material_name,
+        )
+        
+        # Spawn exactly in the center of the 3x3m flat zone
+        origin = np.array([self.size[0]/2, self.size[1]/2, 0.3]) #[cite: 10]
+        return TerrainOutput(origin=origin, geometries=[TerrainGeometry(geom=geom, hfield=field)], flat_patches=None) #[cite: 10]
+
 def svanm2_front_wheelie_cfg(play: bool = False):
     cfg = svanm2_flat_env_cfg(play=play)
 
@@ -175,23 +247,24 @@ def svanm2_rear_wheelie_cfg(play: bool = False):
 
 def svanm2_wheelie_stairs_cfg(play: bool = False):
     cfg = svanm2_flat_env_cfg(play=play)
+    
+    cfg.sim.nconmax = 2000  # Increase maximum allowed contacts
+    cfg.sim.njmax = 4000
 
-    # 1. TERRAIN GENERATOR: "Easy Start" Wide Platforms
+    # 1. TERRAIN GENERATOR: Straight Stairs
+    # Set the type string to tell the framework to expect a generator
     cfg.scene.terrain.terrain_type = "generator"
     
-    # Assign the generator to the specific attribute, do not overwrite 'cfg.scene.terrain'
-    cfg.scene.terrain.terrain_generator = TerrainGeneratorCfg( #[cite: 10]
+    # Attach the generator config to the correct property (terrain_generator)
+    # 1. TERRAIN GENERATOR: 4-Way Square Stairs
+    cfg.scene.terrain.terrain_generator = TerrainGeneratorCfg(
         curriculum=True, 
-        size=(12.0, 12.0), #[cite: 10]
+        size=(15.0, 15.0), # Must remain square[cite: 10]
         sub_terrains={
-            "easy_platforms": HfDiscreteObstaclesTerrainCfg( #[cite: 9]
-                obstacle_height_mode="fixed", #[cite: 9]
-                obstacle_height_range=(0.04, 0.08), #[cite: 9]
-                obstacle_width_range=(1.0, 2.0), #[cite: 9]
-                num_obstacles=60, #[cite: 9]
-                platform_width=3.0, #[cite: 9]
-                square_obstacles=False, #[cite: 9]
-                origin_z_offset=0.05 #[cite: 9]
+            "square_stairs": HfSquareStairsCfg(
+                step_height=0.05, 
+                step_run=0.5,
+                platform_radius=1.5  # Total 3x3m flat area in the center
             )
         }
     )
@@ -262,7 +335,7 @@ def svanm2_wheelie_stairs_cfg(play: bool = False):
     
     cfg.terminations["base_too_low"] = TerminationTermCfg(
         func=wheelie_mdp.base_height_too_low,
-        params={"min_height": 0.18, "grace_period": 30},
+        params={"min_height": 0.15, "grace_period": 30},
     )
     
     cfg.terminations["sideways_fall"] = TerminationTermCfg(
