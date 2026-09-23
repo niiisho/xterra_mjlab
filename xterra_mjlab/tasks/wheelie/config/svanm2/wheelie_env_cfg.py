@@ -176,30 +176,30 @@ def svanm2_rear_wheelie_cfg(play: bool = False):
 def svanm2_wheelie_stairs_cfg(play: bool = False):
     cfg = svanm2_flat_env_cfg(play=play)
 
-    # 1. TERRAIN GENERATOR: The "Swimming Pool" Stairs
-    if hasattr(cfg.scene, "terrain"):
-        # Tell the high-level scene to use a procedural generator
-        cfg.scene.terrain.terrain_type = "generator" 
-        
-        # Inject our specific stair settings into the generator attribute
-        cfg.scene.terrain.terrain_generator = TerrainGeneratorCfg(
-            curriculum=True, 
-            size=(12.0, 12.0), 
-            sub_terrains={
-                "pool_stairs": HfPyramidSlopedTerrainCfg(
-                    inverted=True,          
-                    platform_width=2.0,     
-                    slope_range=(0.5, 0.5), 
-                    horizontal_scale=0.1,   
-                    vertical_scale=0.1,     
-                )
-            }
-        )
+    # 1. TERRAIN GENERATOR: "Easy Start" Wide Platforms
+    cfg.scene.terrain.terrain_type = "generator"
+    
+    # Assign the generator to the specific attribute, do not overwrite 'cfg.scene.terrain'
+    cfg.scene.terrain.terrain_generator = TerrainGeneratorCfg( #[cite: 10]
+        curriculum=True, 
+        size=(12.0, 12.0), #[cite: 10]
+        sub_terrains={
+            "easy_platforms": HfDiscreteObstaclesTerrainCfg( #[cite: 9]
+                obstacle_height_mode="fixed", #[cite: 9]
+                obstacle_height_range=(0.04, 0.08), #[cite: 9]
+                obstacle_width_range=(1.0, 2.0), #[cite: 9]
+                num_obstacles=60, #[cite: 9]
+                platform_width=3.0, #[cite: 9]
+                square_obstacles=False, #[cite: 9]
+                origin_z_offset=0.05 #[cite: 9]
+            )
+        }
+    )
 
     # 2. EXTEROCEPTION (Height Scanners) with Visualization enabled
     height_scanner_cfg = TerrainHeightSensorCfg(
         name="base_height_scan", #[cite: 6]
-        # ADDED entity="robot" HERE:
+        # CRITICAL FIX: Ensure entity="robot" is included here
         frame=ObjRef(type="body", name="base", entity="robot"), #[cite: 1, 4]
         pattern=GridPatternCfg(
             size=(1.5, 1.5), #[cite: 4]
