@@ -248,8 +248,8 @@ def svanm2_rear_wheelie_cfg(play: bool = False):
 def svanm2_wheelie_stairs_cfg(play: bool = False):
     cfg = svanm2_flat_env_cfg(play=play)
     
-    cfg.sim.nconmax = 600  # Increase maximum allowed contacts
-    cfg.sim.njmax = 200
+    cfg.sim.nconmax = 200  # Increase maximum allowed contacts
+    cfg.sim.njmax = 500
 
     # 1. TERRAIN GENERATOR: Straight Stairs
     # Set the type string to tell the framework to expect a generator
