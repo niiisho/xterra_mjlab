@@ -213,11 +213,11 @@ def svanm2_wheelie_stairs_cfg(play: bool = False):
     # 3. CONTACT SENSORS (With Calf/Shank Regex)[cite: 3]
     thigh_ground_cfg = ContactSensorCfg(
         name="thigh_ground_touch",
-        primary=ContactMatch(mode="body", entity="robot", pattern="(FL|FR|RL|RR)_(thigh|calf|shank)_link"), #[cite: 3]
-        secondary=ContactMatch(mode="body", pattern="terrain"), #[cite: 3]
-        fields=("found",), #[cite: 3]
-        reduce="none", #[cite: 3]
-        num_slots=1, #[cite: 3]
+        primary=ContactMatch(mode="body", entity="robot", pattern="(FL|FR|RL|RR)_thigh_link"),
+        secondary=ContactMatch(mode="body", pattern="terrain"), 
+        fields=("found",),
+        reduce="none",
+        num_slots=1,
     )
     trunk_ground_cfg = ContactSensorCfg(
         name="trunk_ground_touch",
