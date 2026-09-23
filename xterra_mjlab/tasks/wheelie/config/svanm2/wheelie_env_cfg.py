@@ -77,6 +77,14 @@ def svanm2_front_wheelie_cfg(play: bool = False):
         },
     )
     
+    # 0.25m gives it enough room to do a deep squat before jumping, but kills it if it completely collapses
+    cfg.terminations["base_too_low"] = TerminationTermCfg(
+        func=wheelie_mdp.base_height_too_low,
+        params={
+            "min_height": 0.27,
+            "grace_period": 30
+        },
+    )
     
     cfg.terminations["sideways_fall"] = TerminationTermCfg(
         func=wheelie_mdp.excessive_roll,
@@ -93,12 +101,20 @@ def svanm2_front_wheelie_cfg(play: bool = False):
         },
     )
 
+    cfg.rewards["squat_penalty"] = RewardTermCfg(
+        func=wheelie_mdp.base_height_penalty,
+        weight=-2.0,
+        params={
+            "penalty_threshold": 0.32,
+        },
+    )
+
     cfg.rewards["front_air_height"] = RewardTermCfg(
         func=wheelie_mdp.front_air_height_reward,
         weight=5.0,  # A flat 5.0 points per frame if it holds the high wheelie
         params={
             "sensor_name": "feet_ground_contact",
-            "min_height": 0.25
+            "min_height": 0.36
         },
     )
 
@@ -134,10 +150,7 @@ def svanm2_front_wheelie_cfg(play: bool = False):
     cfg.rewards["rear_knee_posture"] = RewardTermCfg(
         func=wheelie_mdp.rear_knee_posture_penalty,
         weight=-2.0,
-        params={
-            "target_calf": -0.5, 
-            "grace_period": 30  # Gives it 100 frames to stand up penalty-free
-        }, 
+        params={"target_calf": -2}, # Adjust sign if your URDF bends the other way 
     )
 
     cfg.rewards["front_leg_direction"] = RewardTermCfg(
@@ -249,7 +262,7 @@ def svanm2_wheelie_stairs_cfg(play: bool = False):
     
     cfg.terminations["base_too_low"] = TerminationTermCfg(
         func=wheelie_mdp.base_height_too_low,
-        params={"min_height": 0.15, "grace_period": 30},
+        params={"min_height": 0.18, "grace_period": 30},
     )
     
     cfg.terminations["sideways_fall"] = TerminationTermCfg(
