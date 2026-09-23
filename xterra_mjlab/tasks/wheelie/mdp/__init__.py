@@ -8,7 +8,8 @@ from .rewards import (
     base_height_penalty,
     yaw_rate_penalty,
     front_symmetry_penalty,
-    rear_knee_posture_penalty,
-    front_leg_direction_penalty,
+    forward_velocity_reward,
+    lateral_out_of_bounds,
+    min_velocity_penalty,
 )
 from .events import reset_to_wheelie_pose
