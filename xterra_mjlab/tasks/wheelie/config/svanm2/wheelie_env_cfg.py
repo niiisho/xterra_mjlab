@@ -142,7 +142,10 @@ def svanm2_front_wheelie_cfg(play: bool = False):
     cfg.rewards["rear_knee_posture"] = RewardTermCfg(
         func=wheelie_mdp.rear_knee_posture_penalty,
         weight=-2.0,
-        params={"target_calf": -2}, # Adjust sign if your URDF bends the other way 
+        params={
+            "target_calf": -0.5, 
+            "grace_period": 30  # Gives it 100 frames to stand up penalty-free
+        }, 
     )
 
     cfg.rewards["front_leg_direction"] = RewardTermCfg(
