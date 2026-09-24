@@ -249,7 +249,7 @@ def svanm2_wheelie_stairs_cfg(play: bool = False):
     
     # Attach the generator config to the correct property (terrain_generator)
     # 1. TERRAIN GENERATOR: 4-Way Square Stairs
-    cfg.scene.terrain = TerrainGeneratorCfg(
+    cfg.scene.terrain.terrain_generator = TerrainGeneratorCfg(
         curriculum=True, 
         size=(15.0, 5.0), # 15m long, but only 5m wide to save memory
         sub_terrains={
