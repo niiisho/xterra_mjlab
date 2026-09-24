@@ -27,11 +27,11 @@ from mjlab.terrains.terrain_generator import SubTerrainCfg, TerrainOutput, Terra
 from mjlab.terrains.heightfield_terrains import color_by_height #[cite: 9]
 
 @dataclass(kw_only=True)
-class HfSquareStairsCfg(SubTerrainCfg): #[cite: 10]
-    step_height: float = 0.1
-    step_run: float = 0.34
+class HfSquareStairsCfg(SubTerrainCfg): 
+    step_height: float = 0.05
+    step_run: float = 0.5
     platform_radius: float = 1.5  
-    # LOWER THIS TO 0.02 TO REMOVE THE SLANT
+    # REVERT TO 0.1: Eliminates the collision crash by spacing out the triangles
     horizontal_scale: float = 0.1  
     vertical_scale: float = 0.005
     
