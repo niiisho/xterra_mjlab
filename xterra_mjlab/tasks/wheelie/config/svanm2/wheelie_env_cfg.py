@@ -32,7 +32,7 @@ class HfSquareStairsCfg(SubTerrainCfg): #[cite: 10]
     step_run: float = 0.34
     platform_radius: float = 1.5  
     # LOWER THIS TO 0.02 TO REMOVE THE SLANT
-    horizontal_scale: float = 0.05  
+    horizontal_scale: float = 0.1  
     vertical_scale: float = 0.005
     
     def function(self, difficulty: float, spec: mujoco.MjSpec, rng: np.random.Generator) -> TerrainOutput: #[cite: 10]
@@ -250,7 +250,7 @@ def svanm2_wheelie_stairs_cfg(play: bool = False):
     cfg = svanm2_flat_env_cfg(play=play)
     
     cfg.sim.nconmax = 200  # Increase maximum allowed contacts
-    cfg.sim.njmax = 500
+    cfg.sim.njmax = 400
 
     # 1. TERRAIN GENERATOR: Straight Stairs
     # Set the type string to tell the framework to expect a generator
