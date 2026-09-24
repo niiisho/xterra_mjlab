@@ -243,19 +243,15 @@ def svanm2_wheelie_stairs_cfg(play: bool = False):
     cfg.sim.nconmax = 200  # Increase maximum allowed contacts
     cfg.sim.njmax = 500
 
-    # 1. TERRAIN GENERATOR: Straight Stairs
-    # Set the type string to tell the framework to expect a generator
-    cfg.scene.terrain.terrain_type = "generator"
-    
-    # Attach the generator config to the correct property (terrain_generator)
+   
     # 1. TERRAIN GENERATOR: 4-Way Square Stairs
     cfg.scene.terrain.terrain_generator = TerrainGeneratorCfg(
         curriculum=True, 
         size=(15.0, 5.0), # 15m long, but only 5m wide to save memory
         sub_terrains={
             "straight_stairs": HfStraightStairsCfg(
-                step_height=0.05, 
-                step_run=0.5,
+                step_height=0.1, 
+                step_run=0.3,
             )
         }
     )
