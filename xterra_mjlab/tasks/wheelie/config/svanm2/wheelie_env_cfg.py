@@ -30,8 +30,9 @@ from mjlab.terrains.heightfield_terrains import color_by_height #[cite: 9]
 class HfSquareStairsCfg(SubTerrainCfg): #[cite: 10]
     step_height: float = 0.1
     step_run: float = 0.3
-    platform_radius: float = 1.5  # Creates a 3m x 3m flat spawn area in the center
-    horizontal_scale: float = 0.1
+    platform_radius: float = 1.5  
+    # LOWER THIS TO 0.02 TO REMOVE THE SLANT
+    horizontal_scale: float = 0.02  
     vertical_scale: float = 0.005
     
     def function(self, difficulty: float, spec: mujoco.MjSpec, rng: np.random.Generator) -> TerrainOutput: #[cite: 10]
