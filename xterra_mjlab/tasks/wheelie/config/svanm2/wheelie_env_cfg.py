@@ -32,7 +32,7 @@ class HfSquareStairsCfg(SubTerrainCfg): #[cite: 10]
     step_run: float = 0.34
     platform_radius: float = 1.5  
     # LOWER THIS TO 0.02 TO REMOVE THE SLANT
-    horizontal_scale: float = 0.04  
+    horizontal_scale: float = 0.1  
     vertical_scale: float = 0.005
     
     def function(self, difficulty: float, spec: mujoco.MjSpec, rng: np.random.Generator) -> TerrainOutput: #[cite: 10]
