@@ -263,8 +263,8 @@ def svanm2_wheelie_stairs_cfg(play: bool = False):
         size=(15.0, 15.0), # Must remain square[cite: 10]
         sub_terrains={
             "square_stairs": HfSquareStairsCfg(
-                step_height=0.05, 
-                step_run=0.5,
+                step_height=0.9, 
+                step_run=0.35,
                 platform_radius=1.5  # Total 3x3m flat area in the center
             )
         }
