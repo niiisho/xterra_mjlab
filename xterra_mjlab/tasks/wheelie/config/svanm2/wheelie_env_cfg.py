@@ -28,8 +28,8 @@ from mjlab.terrains.heightfield_terrains import color_by_height #[cite: 9]
 
 @dataclass(kw_only=True)
 class HfSquareStairsCfg(SubTerrainCfg): #[cite: 10]
-    step_height: float = 0.05
-    step_run: float = 0.5
+    step_height: float = 0.1
+    step_run: float = 0.3
     platform_radius: float = 1.5  # Creates a 3m x 3m flat spawn area in the center
     horizontal_scale: float = 0.1
     vertical_scale: float = 0.005
