@@ -29,10 +29,10 @@ from mjlab.terrains.heightfield_terrains import color_by_height #[cite: 9]
 @dataclass(kw_only=True)
 class HfSquareStairsCfg(SubTerrainCfg): #[cite: 10]
     step_height: float = 0.1
-    step_run: float = 0.3
+    step_run: float = 0.34
     platform_radius: float = 1.5  
     # LOWER THIS TO 0.02 TO REMOVE THE SLANT
-    horizontal_scale: float = 0.02  
+    horizontal_scale: float = 0.04  
     vertical_scale: float = 0.005
     
     def function(self, difficulty: float, spec: mujoco.MjSpec, rng: np.random.Generator) -> TerrainOutput: #[cite: 10]
@@ -263,8 +263,8 @@ def svanm2_wheelie_stairs_cfg(play: bool = False):
         size=(15.0, 15.0), # Must remain square[cite: 10]
         sub_terrains={
             "square_stairs": HfSquareStairsCfg(
-                step_height=0.9, 
-                step_run=0.35,
+                step_height=0.1, 
+                step_run=0.3,
                 platform_radius=1.5  # Total 3x3m flat area in the center
             )
         }
