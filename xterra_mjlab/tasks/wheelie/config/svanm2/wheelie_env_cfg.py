@@ -23,47 +23,38 @@ import uuid
 import numpy as np
 import mujoco
 from dataclasses import dataclass
-from mjlab.terrains.terrain_generator import SubTerrainCfg, TerrainOutput, TerrainGeometry #[cite: 10]
-from mjlab.terrains.heightfield_terrains import color_by_height #[cite: 9]
+from mjlab.terrains.terrain_generator import SubTerrainCfg, TerrainOutput, TerrainGeometry
+from mjlab.terrains.heightfield_terrains import color_by_height
 
 @dataclass(kw_only=True)
-class HfSquareStairsCfg(SubTerrainCfg): 
+class HfStraightStairsCfg(SubTerrainCfg): 
     step_height: float = 0.05
     step_run: float = 0.5
-    platform_radius: float = 1.5  
-    # REVERT TO 0.1: Eliminates the collision crash by spacing out the triangles
+    # Retained 0.1 to prevent the >= 50 collision overflow error
     horizontal_scale: float = 0.1  
     vertical_scale: float = 0.005
     
-    def function(self, difficulty: float, spec: mujoco.MjSpec, rng: np.random.Generator) -> TerrainOutput: #[cite: 10]
+    def function(self, difficulty: float, spec: mujoco.MjSpec, rng: np.random.Generator) -> TerrainOutput: 
         width_px = int(self.size[0] / self.horizontal_scale)
         length_px = int(self.size[1] / self.horizontal_scale)
         
         height_units = int(self.step_height / self.vertical_scale)
+        cx = width_px // 2  # Center X
         
-        # Find the exact pixel center
-        cx = width_px // 2
-        cy = length_px // 2
-        
-        # Create a 2D grid of coordinates using numpy for fast math
+        # Create a fast 2D grid for the X-axis
         x = np.arange(width_px)
-        y = np.arange(length_px)
-        xx, yy = np.meshgrid(x, y, indexing="ij")
+        xx = np.broadcast_to(x[:, None], (width_px, length_px))
         
-        # Calculate physical distance from the center on both axes
-        dx = np.abs(xx - cx) * self.horizontal_scale
-        dy = np.abs(yy - cy) * self.horizontal_scale
+        # Calculate physical forward distance from the center spawn point
+        physical_x = (xx - cx) * self.horizontal_scale
         
-        # The maximum distance determines the concentric square shapes
-        dist = np.maximum(dx, dy)
+        # Flat mask: Everything behind the robot (negative X) and up to 1.5m in front is flat
+        flat_mask = physical_x < 1.5
         
-        # Mask out the center platform to be perfectly flat
-        flat_mask = dist < self.platform_radius
+        # Calculate steps ONLY for the area 1.5m ahead and beyond
+        step_idx = ((physical_x - 1.5) // self.step_run).astype(np.int16) + 1
         
-        # Calculate step indices for the remaining area
-        step_idx = ((dist - self.platform_radius) // self.step_run).astype(np.int16) + 1
-        
-        # Apply heights: 0 for the center, calculated stairs everywhere else
+        # Apply heights
         noise = np.where(flat_mask, 0, step_idx * height_units).astype(np.int16)
         
         elevation_range = np.max(noise) if np.max(noise) > 0 else 1
@@ -73,13 +64,13 @@ class HfSquareStairsCfg(SubTerrainCfg):
         unique_id = uuid.uuid4().hex
         field = spec.add_hfield(
             name=f"hfield_{unique_id}",
-            size=[self.size[0]/2, self.size[1]/2, max_height, 0.1], #[cite: 9]
+            size=[self.size[0]/2, self.size[1]/2, max_height, 0.1], 
             nrow=noise.shape[0], ncol=noise.shape[1],
             userdata=normalized_elevation.flatten().tolist(),
         )
         
         physical_heights = normalized_elevation * max_height
-        material_name = color_by_height(spec, noise, unique_id, physical_heights) #[cite: 9]
+        material_name = color_by_height(spec, noise, unique_id, physical_heights) 
         
         geom = spec.body("terrain").add_geom(
             type=mujoco.mjtGeom.mjGEOM_HFIELD,
@@ -88,9 +79,9 @@ class HfSquareStairsCfg(SubTerrainCfg):
             material=material_name,
         )
         
-        # Spawn exactly in the center of the 3x3m flat zone
-        origin = np.array([self.size[0]/2, self.size[1]/2, 0.3]) #[cite: 10]
-        return TerrainOutput(origin=origin, geometries=[TerrainGeometry(geom=geom, hfield=field)], flat_patches=None) #[cite: 10]
+        # Spawn safely in the exact center of the arena
+        origin = np.array([self.size[0]/2, self.size[1]/2, 0.3]) 
+        return TerrainOutput(origin=origin, geometries=[TerrainGeometry(geom=geom, hfield=field)], flat_patches=None)
 
 def svanm2_front_wheelie_cfg(play: bool = False):
     cfg = svanm2_flat_env_cfg(play=play)
