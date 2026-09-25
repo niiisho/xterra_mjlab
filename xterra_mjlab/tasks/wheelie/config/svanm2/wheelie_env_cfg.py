@@ -26,57 +26,64 @@ from mjlab.terrains.terrain_generator import SubTerrainCfg, TerrainOutput, Terra
 
 @dataclass(kw_only=True)
 class PrimitiveStairsCfg(SubTerrainCfg):
-    step_height: float = 0.05
-    step_run: float = 0.5
+    # Set min/max ranges instead of static numbers
+    step_height_min: float = 0.05
+    step_height_max: float = 0.12  
+    step_run_min: float = 0.3      
+    step_run_max: float = 0.6      
     num_steps: int = 10
     
     def function(self, difficulty: float, spec: mujoco.MjSpec, rng: np.random.Generator) -> TerrainOutput:
         geometries = []
+        size_x, size_y = self.size[0], self.size[1]
+        cx, cy = size_x / 2.0, size_y / 2.0
         
-        size_x = self.size[0]
-        size_y = self.size[1]
-        
-        # Calculate exact center of the arena
-        cx = size_x / 2.0
-        cy = size_y / 2.0
-        
-        # 1. BASE PLANE (Fills entire tile)
+        # 1. BASE PLANE
         base_geom = spec.body("terrain").add_geom(
             type=mujoco.mjtGeom.mjGEOM_BOX,
             size=[size_x/2.0, size_y/2.0, 0.5], 
-            pos=[cx, cy, -0.5], # Top surface is exactly at Z=0
+            pos=[cx, cy, -0.5], 
             rgba=[0.3, 0.5, 0.3, 1.0] 
         )
         geometries.append(TerrainGeometry(geom=base_geom))
         
-        # 2. PERFECTLY VERTICAL STAIRS
-        # Force the stairs to start exactly 1.5m in front of the center spawn
-        start_x = cx + 1.5
+        # 2. FULLY RANDOMIZED STAIRS
+        current_x = cx + 1.5
+        current_z = 0.0
+        
+        # The curriculum smoothly increases base step height based on robot's skill level
+        target_h = self.step_height_min + difficulty * (self.step_height_max - self.step_height_min)
         
         for i in range(1, self.num_steps + 1):
-            half_x = self.step_run / 2.0
-            half_y = size_y / 2.0
-            half_z = (self.step_height * i) / 2.0
+            # Height Randomization: Add up to +- 2cm of noise to create uneven stairs
+            step_h = target_h + rng.uniform(-0.02, 0.02)
+            step_h = max(0.02, step_h) # Ensure step never goes inverted
+            current_z += step_h
             
-            box_cx = start_x + (i - 1) * self.step_run + half_x
-            box_cz = half_z 
+            # Depth Randomization: Every step requires a different stride length
+            step_r = rng.uniform(self.step_run_min, self.step_run_max)
+            
+            half_x = step_r / 2.0
+            half_z = current_z / 2.0
+            box_cx = current_x + half_x
             
             box_geom = spec.body("terrain").add_geom(
                 type=mujoco.mjtGeom.mjGEOM_BOX,
-                size=[half_x, half_y, half_z],
-                pos=[box_cx, cy, box_cz],
+                size=[half_x, size_y/2.0, half_z],
+                pos=[box_cx, cy, half_z],
                 rgba=[0.6, 0.6, 0.6, 1.0] 
             )
             geometries.append(TerrainGeometry(geom=box_geom))
             
+            # Advance the starting position for the next step
+            current_x += step_r
+            
         # 3. TOP LANDING PAD
-        end_of_stairs = start_x + (self.num_steps * self.step_run)
-        pad_length = size_x - end_of_stairs
-        
+        pad_length = size_x - current_x
         if pad_length > 0:
             pad_half_x = pad_length / 2.0
-            pad_half_z = (self.step_height * self.num_steps) / 2.0
-            pad_cx = end_of_stairs + pad_half_x
+            pad_half_z = current_z / 2.0
+            pad_cx = current_x + pad_half_x
             
             pad_geom = spec.body("terrain").add_geom(
                 type=mujoco.mjtGeom.mjGEOM_BOX,
@@ -87,7 +94,6 @@ class PrimitiveStairsCfg(SubTerrainCfg):
             geometries.append(TerrainGeometry(geom=pad_geom))
             
         # 4. SAFE SPAWN
-        # Dropped from 1.0m (100cm) high to guarantee no leg clipping
         origin = np.array([cx, cy, 1.0])
         return TerrainOutput(origin=origin, geometries=geometries, flat_patches=None)
 
@@ -251,18 +257,18 @@ def svanm2_wheelie_stairs_cfg(play: bool = False):
     cfg.sim.nconmax = 200  # Increase maximum allowed contacts
     cfg.sim.njmax = 500
 
-    # 1. TERRAIN GENERATOR: Straight Stairs
-    # Set the type string to tell the framework to expect a generator
     cfg.scene.terrain.terrain_type = "generator"
     
     # 1. TERRAIN GENERATOR: Primitive Solid Stairs
     cfg.scene.terrain.terrain_generator = TerrainGeneratorCfg(
         curriculum=True, 
-        size=(40.0, 40.0), # Massive 40x40m safe zone
+        size=(40.0, 40.0), 
         sub_terrains={
             "primitive_stairs": PrimitiveStairsCfg(
-                step_height=0.1, 
-                step_run=0.3,
+                step_height_min=0.05,  # Easy early training
+                step_height_max=0.12,  # Hard late training (12cm + 2cm noise)
+                step_run_min=0.3,      # Short gaps
+                step_run_max=0.6,      # Long gaps
                 num_steps=10
             )
         }
@@ -400,13 +406,13 @@ def svanm2_wheelie_stairs_cfg(play: bool = False):
     cfg.rewards["reached_the_top"] = RewardTermCfg(
         func=wheelie_mdp.reached_goal_distance,
         weight=1000.0,  # Massive bonus payout
-        params={"target_distance": 9}, 
+        params={"target_distance": 8.5}, 
     )
     
     # Clean reset when it successfully clears the 6.5m mark
     cfg.terminations["success_reached_goal"] = TerminationTermCfg(
         func=wheelie_mdp.reached_goal_distance,
-        params={"target_distance": 9}, 
+        params={"target_distance": 8.5}, 
     )
 
 
