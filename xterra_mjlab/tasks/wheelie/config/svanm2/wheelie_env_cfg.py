@@ -255,7 +255,7 @@ def svanm2_wheelie_stairs_cfg(play: bool = False):
     cfg.scene.terrain.terrain_generator = TerrainGeneratorCfg(
         curriculum=True, 
         # Restored to 15x15 to prevent the engine from rotating the world!
-        size=(400.0, 400.0), 
+        size=(200.0, 200.0), 
         sub_terrains={
             "straight_stairs": HfStraightStairsCfg(
                 step_height=0.1, 
