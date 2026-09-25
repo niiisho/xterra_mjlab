@@ -13,5 +13,6 @@ from .rewards import (
     min_velocity_penalty,
     rear_knee_posture_penalty,
     front_leg_direction_penalty,
+    reached_goal_distance,
 )
 from .events import reset_to_wheelie_pose
