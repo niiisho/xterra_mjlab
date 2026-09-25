@@ -161,7 +161,7 @@ def front_leg_direction_penalty(
     return (fl_wrong + fr_wrong) * past_grace
 
 
-def reached_goal_absolute(env, target_x: float) -> torch.Tensor:
+def reached_goal_distance(env, target_x: float) -> torch.Tensor:
     """Checks if the robot's absolute X coordinate has crossed the finish line."""
     # body_com_pos_w is the absolute position in the world. No origin subtraction needed!
     root_x = env.scene["robot"].data.body_com_pos_w[:, 0, 0]
