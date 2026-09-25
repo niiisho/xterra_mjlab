@@ -41,10 +41,11 @@ class PrimitiveStairsCfg(SubTerrainCfg):
         geometries = []
         size_x, size_y = self.size[0], self.size[1]
         
-        # EXACT CENTER of the 40x40 tile (20.0, 20.0)
+        # Exact center coordinates of the local [0 to 40] bounding box
         cx, cy = size_x / 2.0, size_y / 2.0
         
-        # 1. THE FLOOR
+        # 1. THE FLOOR 
+        # Placed at cx, cy to perfectly cover [0, size_x] and [0, size_y]
         base_geom = spec.body("terrain").add_geom(
             type=mujoco.mjtGeom.mjGEOM_BOX,
             size=[cx, cy, 0.5], 
@@ -54,13 +55,15 @@ class PrimitiveStairsCfg(SubTerrainCfg):
         geometries.append(TerrainGeometry(geom=base_geom))
         
         # 2. RANDOMIZED STAIRS
-        # 2. RANDOMIZED STAIRS
         norm_diff = difficulty / 10.0 if difficulty > 1.0 else difficulty
         target_h = self.step_height_min + norm_diff * (self.step_height_max - self.step_height_min)
         
-        # Randomize the starting runway between 2.0 and 4.0 meters!
+        # Set spawn safely inside the current tile bounds at X=4.0
+        spawn_x = 4.0
+        
+        # Start stairs 2 to 4 meters in front of the robot
         runway_length = rng.uniform(2.0, 3.0)
-        current_x = cx + runway_length
+        current_x = spawn_x + runway_length
         current_z = 0.0
         
         for i in range(1, self.num_steps + 1):
@@ -69,20 +72,21 @@ class PrimitiveStairsCfg(SubTerrainCfg):
             current_z += step_h
             
             step_r = rng.uniform(self.step_run_min, self.step_run_max)
-            half_x = step_r / 2.0
-            half_z = current_z / 2.0
-            box_cx = current_x + half_x
+            box_half_x = step_r / 2.0
+            box_half_z = current_z / 2.0
+            box_cx = current_x + box_half_x
             
             box_geom = spec.body("terrain").add_geom(
                 type=mujoco.mjtGeom.mjGEOM_BOX,
-                size=[half_x, cy, half_z],
-                pos=[box_cx, cy, half_z],
+                size=[box_half_x, cy, box_half_z],
+                pos=[box_cx, cy, box_half_z], # Centered perfectly at Y=20.0
                 rgba=[0.6, 0.6, 0.6, 1.0] 
             )
             geometries.append(TerrainGeometry(geom=box_geom))
             current_x += step_r
             
         # 3. TOP LANDING PAD
+        # Stops safely before the tile boundary
         safe_end_x = size_x - 0.5 
         pad_length = safe_end_x - current_x
         
@@ -100,8 +104,8 @@ class PrimitiveStairsCfg(SubTerrainCfg):
             geometries.append(TerrainGeometry(geom=pad_geom))
             
         # 4. SPAWN ORIGIN
-        # We must return the exact center (cx) so the framework's tracking starts distance at 0.0!
-        origin = np.array([cx, cy, 1.0])
+        # Safely drops the robot at X=4.0, perfectly centered in the lane at Y=20.0
+        origin = np.array([spawn_x, cy, 1.0])
         return TerrainOutput(origin=origin, geometries=geometries, flat_patches=None)
 
 def svanm2_front_wheelie_cfg(play: bool = False):
