@@ -19,74 +19,77 @@ from mjlab.managers.event_manager import EventTermCfg
 from mjlab.terrains.heightfield_terrains import HfPyramidSlopedTerrainCfg
 from mjlab.envs.mdp.observations import height_scan
 
-import uuid
-import numpy as np
-import mujoco
-from dataclasses import dataclass
-from mjlab.terrains.terrain_generator import SubTerrainCfg, TerrainOutput, TerrainGeometry #[cite: 10]
-from mjlab.terrains.heightfield_terrains import color_by_height #[cite: 9]
-
-import uuid
 import numpy as np
 import mujoco
 from dataclasses import dataclass
 from mjlab.terrains.terrain_generator import SubTerrainCfg, TerrainOutput, TerrainGeometry
-from mjlab.terrains.heightfield_terrains import color_by_height
 
 @dataclass(kw_only=True)
-class HfStraightStairsCfg(SubTerrainCfg): 
+class PrimitiveStairsCfg(SubTerrainCfg):
     step_height: float = 0.05
     step_run: float = 0.5
-    horizontal_scale: float = 0.1  
-    vertical_scale: float = 0.005
+    num_steps: int = 10
     
-    def function(self, difficulty: float, spec: mujoco.MjSpec, rng: np.random.Generator) -> TerrainOutput: 
-        width_px = int(self.size[0] / self.horizontal_scale)
-        length_px = int(self.size[1] / self.horizontal_scale)
-        height_units = int(self.step_height / self.vertical_scale)
+    def function(self, difficulty: float, spec: mujoco.MjSpec, rng: np.random.Generator) -> TerrainOutput:
+        geometries = []
         
-        # Use meshgrid to lock in the axes
-        x = np.arange(width_px)
-        y = np.arange(length_px)
-        xx, yy = np.meshgrid(x, y, indexing="ij")
+        size_x = self.size[0]
+        size_y = self.size[1]
         
-        # In MuJoCo, the second index (yy) maps to the forward X-axis!
-        cx = length_px // 2  
+        # Calculate exact center of the arena
+        cx = size_x / 2.0
+        cy = size_y / 2.0
         
-        # Calculate physical distance strictly on the forward axis
-        physical_forward = (yy - cx) * self.horizontal_scale
-        
-        # Mask: Everything behind the robot and the first 1.5m in front is flat
-        flat_mask = physical_forward < 1.5
-        
-        # Build stairs only in the forward direction
-        step_idx = ((physical_forward - 1.5) // self.step_run).astype(np.int16) + 1
-        noise = np.where(flat_mask, 0, step_idx * height_units).astype(np.int16)
-        
-        elevation_range = np.max(noise) if np.max(noise) > 0 else 1
-        max_height = elevation_range * self.vertical_scale
-        normalized_elevation = (noise / elevation_range).astype(np.float32)
-        
-        unique_id = uuid.uuid4().hex
-        field = spec.add_hfield(
-            name=f"hfield_{unique_id}",
-            size=[self.size[0]/2, self.size[1]/2, max_height, 0.1], 
-            nrow=noise.shape[0], ncol=noise.shape[1],
-            userdata=normalized_elevation.flatten().tolist(),
+        # 1. BASE PLANE (Fills entire tile)
+        base_geom = spec.body("terrain").add_geom(
+            type=mujoco.mjtGeom.mjGEOM_BOX,
+            size=[size_x/2.0, size_y/2.0, 0.5], 
+            pos=[cx, cy, -0.5], # Top surface is exactly at Z=0
+            rgba=[0.3, 0.5, 0.3, 1.0] 
         )
+        geometries.append(TerrainGeometry(geom=base_geom))
         
-        physical_heights = normalized_elevation * max_height
-        material_name = color_by_height(spec, noise, unique_id, physical_heights) 
+        # 2. PERFECTLY VERTICAL STAIRS
+        # Force the stairs to start exactly 1.5m in front of the center spawn
+        start_x = cx + 1.5
         
-        geom = spec.body("terrain").add_geom(
-            type=mujoco.mjtGeom.mjGEOM_HFIELD,
-            hfieldname=field.name,
-            pos=[self.size[0]/2, self.size[1]/2, 0],
-            material=material_name,
-        )
+        for i in range(1, self.num_steps + 1):
+            half_x = self.step_run / 2.0
+            half_y = size_y / 2.0
+            half_z = (self.step_height * i) / 2.0
+            
+            box_cx = start_x + (i - 1) * self.step_run + half_x
+            box_cz = half_z 
+            
+            box_geom = spec.body("terrain").add_geom(
+                type=mujoco.mjtGeom.mjGEOM_BOX,
+                size=[half_x, half_y, half_z],
+                pos=[box_cx, cy, box_cz],
+                rgba=[0.6, 0.6, 0.6, 1.0] 
+            )
+            geometries.append(TerrainGeometry(geom=box_geom))
+            
+        # 3. TOP LANDING PAD
+        end_of_stairs = start_x + (self.num_steps * self.step_run)
+        pad_length = size_x - end_of_stairs
         
-        origin = np.array([self.size[0]/2, self.size[1]/2, 0.3]) 
-        return TerrainOutput(origin=origin, geometries=[TerrainGeometry(geom=geom, hfield=field)], flat_patches=None) #[cite: 10]
+        if pad_length > 0:
+            pad_half_x = pad_length / 2.0
+            pad_half_z = (self.step_height * self.num_steps) / 2.0
+            pad_cx = end_of_stairs + pad_half_x
+            
+            pad_geom = spec.body("terrain").add_geom(
+                type=mujoco.mjtGeom.mjGEOM_BOX,
+                size=[pad_half_x, size_y/2.0, pad_half_z],
+                pos=[pad_cx, cy, pad_half_z],
+                rgba=[0.6, 0.6, 0.6, 1.0]
+            )
+            geometries.append(TerrainGeometry(geom=pad_geom))
+            
+        # 4. SAFE SPAWN
+        # Dropped from 1.0m (100cm) high to guarantee no leg clipping
+        origin = np.array([cx, cy, 1.0])
+        return TerrainOutput(origin=origin, geometries=geometries, flat_patches=None)
 
 def svanm2_front_wheelie_cfg(play: bool = False):
     cfg = svanm2_flat_env_cfg(play=play)
@@ -252,14 +255,15 @@ def svanm2_wheelie_stairs_cfg(play: bool = False):
     # Set the type string to tell the framework to expect a generator
     cfg.scene.terrain.terrain_type = "generator"
     
+    # 1. TERRAIN GENERATOR: Primitive Solid Stairs
     cfg.scene.terrain.terrain_generator = TerrainGeneratorCfg(
         curriculum=True, 
-        # Restored to 15x15 to prevent the engine from rotating the world!
-        size=(100.0, 100.0), 
+        size=(40.0, 40.0), # Massive 40x40m safe zone
         sub_terrains={
-            "straight_stairs": HfStraightStairsCfg(
+            "primitive_stairs": PrimitiveStairsCfg(
                 step_height=0.1, 
-                step_run=0.3,
+                step_run=0.5,
+                num_steps=10
             )
         }
     )
@@ -391,5 +395,19 @@ def svanm2_wheelie_stairs_cfg(play: bool = False):
         weight=-3.0,
         params={"min_vel": 0.1, "grace_period": 50},
     )
+    
+    # HUGE reward for crossing the finish line (teaches it that reaching the top is good)
+    cfg.rewards["reached_the_top"] = RewardTermCfg(
+        func=wheelie_mdp.reached_goal_distance,
+        weight=1000.0,  # Massive bonus payout
+        params={"target_distance": 9}, 
+    )
+    
+    # Clean reset when it successfully clears the 6.5m mark
+    cfg.terminations["success_reached_goal"] = TerminationTermCfg(
+        func=wheelie_mdp.reached_goal_distance,
+        params={"target_distance": 9}, 
+    )
+
 
     return cfg
