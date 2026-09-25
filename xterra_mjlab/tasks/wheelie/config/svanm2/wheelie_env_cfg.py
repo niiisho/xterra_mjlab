@@ -41,11 +41,10 @@ class PrimitiveStairsCfg(SubTerrainCfg):
         geometries = []
         size_x, size_y = self.size[0], self.size[1]
         
-        # Exact center of the 40x40 tile bounds
+        # EXACT CENTER of the 40x40 tile (20.0, 20.0)
         cx, cy = size_x / 2.0, size_y / 2.0
         
         # 1. THE FLOOR
-        # Placed at cx, cy to perfectly cover the entire X=0 to 40 bounds without bleeding out
         base_geom = spec.body("terrain").add_geom(
             type=mujoco.mjtGeom.mjGEOM_BOX,
             size=[cx, cy, 0.5], 
@@ -55,11 +54,13 @@ class PrimitiveStairsCfg(SubTerrainCfg):
         geometries.append(TerrainGeometry(geom=base_geom))
         
         # 2. RANDOMIZED STAIRS
+        # 2. RANDOMIZED STAIRS
         norm_diff = difficulty / 10.0 if difficulty > 1.0 else difficulty
         target_h = self.step_height_min + norm_diff * (self.step_height_max - self.step_height_min)
         
-        # Start stairs exactly at X=4.0 (leaving a clear 4-meter starting zone)
-        current_x = 1.5
+        # Randomize the starting runway between 2.0 and 4.0 meters!
+        runway_length = rng.uniform(2.0, 3.0)
+        current_x = cx + runway_length
         current_z = 0.0
         
         for i in range(1, self.num_steps + 1):
@@ -82,8 +83,6 @@ class PrimitiveStairsCfg(SubTerrainCfg):
             current_x += step_r
             
         # 3. TOP LANDING PAD
-        # Force the pad to stop 0.5m BEFORE the tile ends. 
-        # This acts as an absolute physical barrier to prevent the previous tile's wall from overlapping into your spawn!
         safe_end_x = size_x - 0.5 
         pad_length = safe_end_x - current_x
         
@@ -100,9 +99,9 @@ class PrimitiveStairsCfg(SubTerrainCfg):
             )
             geometries.append(TerrainGeometry(geom=pad_geom))
             
-        # 4. SAFE RUNWAY SPAWN
-        # Spawns robot safely at X=2.0, giving it exactly 2 meters of clear runway before the stairs start at X=4.0
-        origin = np.array([1.0, cy, 1.0])
+        # 4. SPAWN ORIGIN
+        # We must return the exact center (cx) so the framework's tracking starts distance at 0.0!
+        origin = np.array([cx, cy, 1.0])
         return TerrainOutput(origin=origin, geometries=geometries, flat_patches=None)
 
 def svanm2_front_wheelie_cfg(play: bool = False):
