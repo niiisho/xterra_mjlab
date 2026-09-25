@@ -262,7 +262,7 @@ def svanm2_wheelie_stairs_cfg(play: bool = False):
         sub_terrains={
             "primitive_stairs": PrimitiveStairsCfg(
                 step_height=0.1, 
-                step_run=0.5,
+                step_run=0.3,
                 num_steps=10
             )
         }
