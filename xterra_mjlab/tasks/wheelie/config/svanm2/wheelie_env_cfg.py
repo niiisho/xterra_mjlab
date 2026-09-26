@@ -41,7 +41,7 @@ class PrimitiveStairsCfg(SubTerrainCfg):
         geometries = []
         size_x, size_y = self.size[0], self.size[1]
         
-        # EXACT CENTER of the 40x40 tile (20.0, 20.0)
+        # Center of the 40x40 tile is exactly 20.0, 20.0
         cx, cy = size_x / 2.0, size_y / 2.0
         
         # 1. THE FLOOR
@@ -54,11 +54,12 @@ class PrimitiveStairsCfg(SubTerrainCfg):
         geometries.append(TerrainGeometry(geom=base_geom))
         
         # 2. RANDOMIZED STAIRS
-        # 2. RANDOMIZED STAIRS
         norm_diff = difficulty / 10.0 if difficulty > 1.0 else difficulty
         target_h = self.step_height_min + norm_diff * (self.step_height_max - self.step_height_min)
         
-        # Randomize the starting runway between 2.0 and 4.0 meters!
+        # --- THE FIX ---
+        # The framework forces the robot to spawn at exactly `cx` (20.0).
+        # We start the stairs 2 to 4 meters in front of that center point!
         runway_length = rng.uniform(2.0, 4.0)
         current_x = cx + runway_length
         current_z = 0.0
@@ -69,14 +70,14 @@ class PrimitiveStairsCfg(SubTerrainCfg):
             current_z += step_h
             
             step_r = rng.uniform(self.step_run_min, self.step_run_max)
-            half_x = step_r / 2.0
-            half_z = current_z / 2.0
-            box_cx = current_x + half_x
+            box_half_x = step_r / 2.0
+            box_half_z = current_z / 2.0
+            box_cx = current_x + box_half_x
             
             box_geom = spec.body("terrain").add_geom(
                 type=mujoco.mjtGeom.mjGEOM_BOX,
-                size=[half_x, cy, half_z],
-                pos=[box_cx, cy, half_z],
+                size=[box_half_x, cy, box_half_z],
+                pos=[box_cx, cy, box_half_z],
                 rgba=[0.6, 0.6, 0.6, 1.0] 
             )
             geometries.append(TerrainGeometry(geom=box_geom))
@@ -99,8 +100,19 @@ class PrimitiveStairsCfg(SubTerrainCfg):
             )
             geometries.append(TerrainGeometry(geom=pad_geom))
             
+        # 3.5 THE VISUAL FINISH LINE (Red Marker)
+        # Places a red line 11 meters away from the spawn center (cx)
+        finish_line_x = cx + 11.0 
+        line_geom = spec.body("terrain").add_geom(
+            type=mujoco.mjtGeom.mjGEOM_BOX,
+            size=[0.05, cy, 0.01], 
+            pos=[finish_line_x, cy, current_z + 0.01], 
+            rgba=[1.0, 0.0, 0.0, 1.0] 
+        )
+        geometries.append(TerrainGeometry(geom=line_geom))
+            
         # 4. SPAWN ORIGIN
-        # We must return the exact center (cx) so the framework's tracking starts distance at 0.0!
+        # Return cx, cy. The framework forces this anyway, so our math is finally perfectly synced!
         origin = np.array([cx, cy, 1.0])
         return TerrainOutput(origin=origin, geometries=geometries, flat_patches=None)
 
@@ -420,13 +432,13 @@ def svanm2_wheelie_stairs_cfg(play: bool = False):
     cfg.rewards["reached_the_top"] = RewardTermCfg(
         func=wheelie_mdp.reached_goal_distance,
         weight=1000.0,  # Massive bonus payout
-        params={"target_distance": 5}, 
+        params={"target_distance": 8}, 
     )
     
     # Clean reset when it successfully clears the 6.5m mark
     cfg.terminations["success_reached_goal"] = TerminationTermCfg(
         func=wheelie_mdp.reached_goal_distance,
-        params={"target_distance": 5}, 
+        params={"target_distance": 8}, 
     )
 
 
