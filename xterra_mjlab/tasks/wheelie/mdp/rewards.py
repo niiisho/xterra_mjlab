@@ -162,13 +162,8 @@ def front_leg_direction_penalty(
 
 
 def reached_goal_distance(env, target_distance: float) -> torch.Tensor:
-    """Checks if the robot has moved far enough forward to reach the top pad."""
-    
+    """Checks if the robot's absolute X coordinate has crossed the finish line."""
     root_x = env.scene["robot"].data.body_com_pos_w[:, 0, 0]
-    origin_x = env.scene.env_origins[:, 0]
     
-    distance_forward = root_x - origin_x
-    
-    is_at_goal = distance_forward > target_distance
-    
-    return is_at_goal
+    # Returns True (1) if it crossed the absolute X line, False (0) otherwise
+    return root_x > target_distance
