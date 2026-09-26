@@ -24,13 +24,9 @@ import mujoco
 from dataclasses import dataclass
 from mjlab.terrains.terrain_generator import SubTerrainCfg, TerrainOutput, TerrainGeometry
 
-import numpy as np
-import mujoco
-from dataclasses import dataclass
-from mjlab.terrains.terrain_generator import SubTerrainCfg, TerrainOutput, TerrainGeometry
-
 @dataclass(kw_only=True)
 class PrimitiveStairsCfg(SubTerrainCfg):
+    # Set min/max ranges instead of static numbers
     step_height_min: float = 0.05
     step_height_max: float = 0.12  
     step_run_min: float = 0.3      
@@ -40,53 +36,50 @@ class PrimitiveStairsCfg(SubTerrainCfg):
     def function(self, difficulty: float, spec: mujoco.MjSpec, rng: np.random.Generator) -> TerrainOutput:
         geometries = []
         size_x, size_y = self.size[0], self.size[1]
-        
-        # Center of the 40x40 tile is exactly 20.0, 20.0
         cx, cy = size_x / 2.0, size_y / 2.0
         
-        # 1. THE FLOOR
+        # 1. BASE PLANE
         base_geom = spec.body("terrain").add_geom(
             type=mujoco.mjtGeom.mjGEOM_BOX,
-            size=[cx, cy, 0.5], 
+            size=[size_x/2.0, size_y/2.0, 0.5], 
             pos=[cx, cy, -0.5], 
             rgba=[0.3, 0.5, 0.3, 1.0] 
         )
         geometries.append(TerrainGeometry(geom=base_geom))
         
-        # 2. RANDOMIZED STAIRS
-        norm_diff = difficulty / 10.0 if difficulty > 1.0 else difficulty
-        target_h = self.step_height_min + norm_diff * (self.step_height_max - self.step_height_min)
-        
-        # --- THE FIX ---
-        # The framework forces the robot to spawn at exactly `cx` (20.0).
-        # We start the stairs 2 to 4 meters in front of that center point!
-        runway_length = rng.uniform(2.0, 4.0)
-        current_x = cx + runway_length
+        runway_length = rng.uniform(1.0, 2.0)
+        current_x = cx + 1.5
         current_z = 0.0
         
+        # The curriculum smoothly increases base step height based on robot's skill level
+        target_h = self.step_height_min + difficulty * (self.step_height_max - self.step_height_min)
+        
         for i in range(1, self.num_steps + 1):
+            # Height Randomization: Add up to +- 2cm of noise to create uneven stairs
             step_h = target_h + rng.uniform(-0.02, 0.02)
-            step_h = max(0.02, step_h) 
+            step_h = max(0.02, step_h) # Ensure step never goes inverted
             current_z += step_h
             
+            # Depth Randomization: Every step requires a different stride length
             step_r = rng.uniform(self.step_run_min, self.step_run_max)
-            box_half_x = step_r / 2.0
-            box_half_z = current_z / 2.0
-            box_cx = current_x + box_half_x
+            
+            half_x = step_r / 2.0
+            half_z = current_z / 2.0
+            box_cx = current_x + half_x
             
             box_geom = spec.body("terrain").add_geom(
                 type=mujoco.mjtGeom.mjGEOM_BOX,
-                size=[box_half_x, cy, box_half_z],
-                pos=[box_cx, cy, box_half_z],
+                size=[half_x, size_y/2.0, half_z],
+                pos=[box_cx, cy, half_z],
                 rgba=[0.6, 0.6, 0.6, 1.0] 
             )
             geometries.append(TerrainGeometry(geom=box_geom))
+            
+            # Advance the starting position for the next step
             current_x += step_r
             
         # 3. TOP LANDING PAD
-        safe_end_x = size_x - 0.5 
-        pad_length = safe_end_x - current_x
-        
+        pad_length = size_x - current_x
         if pad_length > 0:
             pad_half_x = pad_length / 2.0
             pad_half_z = current_z / 2.0
@@ -94,25 +87,13 @@ class PrimitiveStairsCfg(SubTerrainCfg):
             
             pad_geom = spec.body("terrain").add_geom(
                 type=mujoco.mjtGeom.mjGEOM_BOX,
-                size=[pad_half_x, cy, pad_half_z],
+                size=[pad_half_x, size_y/2.0, pad_half_z],
                 pos=[pad_cx, cy, pad_half_z],
                 rgba=[0.6, 0.6, 0.6, 1.0]
             )
             geometries.append(TerrainGeometry(geom=pad_geom))
             
-        # 3.5 THE VISUAL FINISH LINE (Red Marker)
-        # Places a red line 11 meters away from the spawn center (cx)
-        finish_line_x = cx + 11.0 
-        line_geom = spec.body("terrain").add_geom(
-            type=mujoco.mjtGeom.mjGEOM_BOX,
-            size=[0.05, cy, 0.01], 
-            pos=[finish_line_x, cy, current_z + 0.01], 
-            rgba=[1.0, 0.0, 0.0, 1.0] 
-        )
-        geometries.append(TerrainGeometry(geom=line_geom))
-            
-        # 4. SPAWN ORIGIN
-        # Return cx, cy. The framework forces this anyway, so our math is finally perfectly synced!
+        # 4. SAFE SPAWN
         origin = np.array([cx, cy, 1.0])
         return TerrainOutput(origin=origin, geometries=geometries, flat_patches=None)
 
@@ -281,20 +262,13 @@ def svanm2_wheelie_stairs_cfg(play: bool = False):
     # 1. TERRAIN GENERATOR: Primitive Solid Stairs
     cfg.scene.terrain.terrain_generator = TerrainGeneratorCfg(
         curriculum=True, 
-        
-        # 1. Shrink the individual tile to a compact runway
         size=(40.0, 40.0), 
-        
-        # 2. Build the Grid!
-        num_rows=10,  # 10 levels of increasing difficulty
-        num_cols=20,  # 20 completely different, randomized variations per level
-        
         sub_terrains={
             "primitive_stairs": PrimitiveStairsCfg(
-                step_height_min=0.05,  
-                step_height_max=0.12,  
-                step_run_min=0.3,      
-                step_run_max=0.6,      
+                step_height_min=0.05,  # Easy early training
+                step_height_max=0.12,  # Hard late training (12cm + 2cm noise)
+                step_run_min=0.3,      # Short gaps
+                step_run_max=0.6,      # Long gaps
                 num_steps=10
             )
         }
@@ -432,13 +406,13 @@ def svanm2_wheelie_stairs_cfg(play: bool = False):
     cfg.rewards["reached_the_top"] = RewardTermCfg(
         func=wheelie_mdp.reached_goal_distance,
         weight=1000.0,  # Massive bonus payout
-        params={"target_distance": 8}, 
+        params={"target_distance": 8.5}, 
     )
     
     # Clean reset when it successfully clears the 6.5m mark
     cfg.terminations["success_reached_goal"] = TerminationTermCfg(
         func=wheelie_mdp.reached_goal_distance,
-        params={"target_distance": 8}, 
+        params={"target_distance": 8.5}, 
     )
 
 
