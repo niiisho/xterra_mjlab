@@ -41,7 +41,6 @@ class PrimitiveStairsCfg(SubTerrainCfg):
         geometries = []
         size_x, size_y = self.size[0], self.size[1]
         
-        # EXACT CENTER of the 40x40 tile (20.0, 20.0)
         cx, cy = size_x / 2.0, size_y / 2.0
         
         # 1. THE FLOOR
@@ -59,8 +58,7 @@ class PrimitiveStairsCfg(SubTerrainCfg):
         target_h = self.step_height_min + norm_diff * (self.step_height_max - self.step_height_min)
         
         # Randomize the starting runway between 2.0 and 4.0 meters!
-        runway_length = rng.uniform(2.0, 3.0)
-        current_x = cx + runway_length
+        current_x = cx - 2
         current_z = 0.0
         
         for i in range(1, self.num_steps + 1):
@@ -271,7 +269,7 @@ def svanm2_wheelie_stairs_cfg(play: bool = False):
         curriculum=True, 
         
         # 1. Shrink the individual tile to a compact runway
-        size=(40.0, 40.0), 
+        size=(10.0, 10.0), 
         
         # 2. Build the Grid!
         num_rows=10,  # 10 levels of increasing difficulty
@@ -420,13 +418,13 @@ def svanm2_wheelie_stairs_cfg(play: bool = False):
     cfg.rewards["reached_the_top"] = RewardTermCfg(
         func=wheelie_mdp.reached_goal_distance,
         weight=1000.0,  # Massive bonus payout
-        params={"target_distance": 8}, 
+        params={"target_distance": 8.2}, 
     )
     
     # Clean reset when it successfully clears the 6.5m mark
     cfg.terminations["success_reached_goal"] = TerminationTermCfg(
         func=wheelie_mdp.reached_goal_distance,
-        params={"target_distance": 8}, 
+        params={"target_distance": 8.2}, 
     )
 
 
