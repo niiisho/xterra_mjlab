@@ -406,13 +406,13 @@ def svanm2_wheelie_stairs_cfg(play: bool = False):
     cfg.rewards["reached_the_top"] = RewardTermCfg(
         func=wheelie_mdp.reached_goal_distance,
         weight=1000.0,  # Massive bonus payout
-        params={"target_distance": 15}, 
+        params={"target_distance": 8}, 
     )
     
     # Clean reset when it successfully clears the 6.5m mark
     cfg.terminations["success_reached_goal"] = TerminationTermCfg(
         func=wheelie_mdp.reached_goal_distance,
-        params={"target_distance": 15}, 
+        params={"target_distance": 8}, 
     )
 
 
