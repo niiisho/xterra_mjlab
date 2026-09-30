@@ -277,10 +277,10 @@ def svanm2_wheelie_stairs_cfg(play: bool = False):
         
         sub_terrains={
             "primitive_stairs": PrimitiveStairsCfg(
-                step_height_min=0.05,  
-                step_height_max=0.12,  
+                step_height_min=0.07,  
+                step_height_max=0.07,  
                 step_run_min=0.3,      
-                step_run_max=0.6,      
+                step_run_max=0.3,      
                 num_steps=10
             )
         }
@@ -328,17 +328,23 @@ def svanm2_wheelie_stairs_cfg(play: bool = False):
     cfg.events.pop("reset_robot_state", None)
 
     # 5. BLIND COMMAND MANAGER & ADD HEIGHT OBSERVATIONS
+    # 5. BLIND COMMAND MANAGER & ASYMMETRIC OBSERVATIONS
     cfg.commands.clear()
     cfg.curriculum.clear()
     cfg.observations["actor"].terms.pop("command", None)
     cfg.observations["critic"].terms.pop("command", None)
 
-    # Use the height_scan MDP function to read the base_height_scan sensor
-    cfg.observations["actor"].terms["height_scan"] = ObservationTermCfg(
+    # --- THE SIM-TO-REAL FIX ---
+    # 1. Blind the Actor: Ensure the exteroceptive height scanner is completely removed
+    cfg.observations["actor"].terms.pop("height_scan", None)
+
+    # 2. Privileged Critic: Give the perfect heightmap ONLY to the Critic network
+    cfg.observations["critic"].terms["height_scan"] = ObservationTermCfg(
         func=height_scan,
         params={"sensor_name": "base_height_scan"}
     )
-    cfg.observations["critic"].terms["height_scan"] = cfg.observations["actor"].terms["height_scan"]
+    # ---------------------------
+    # cfg.observations["critic"].terms["height_scan"] = cfg.observations["actor"].terms["height_scan"]
 
     # Pop default tracking rewards since we are hard-coding forward drive
     for key in ["track_linear_velocity", "track_angular_velocity", "air_time", "foot_clearance", "pose", "upright", "foot_slip"]:
@@ -429,3 +435,22 @@ def svanm2_wheelie_stairs_cfg(play: bool = False):
 
 
     return cfg
+    
+# 9. SIM-TO-REAL PENALTIES
+    cfg.rewards["action_rate"] = RewardTermCfg(
+        func=wheelie_mdp.action_rate_penalty,
+        weight=-0.01, # Small weight, triggers every timestep
+    )
+
+    cfg.rewards["mechanical_work"] = RewardTermCfg(
+        func=wheelie_mdp.mechanical_work_penalty,
+        weight=-0.005,
+    )
+
+    # Adjust these 12 target angles to match the exact physical default standing pose of SvanM2
+    default_joint_angles = [0.0, 0.5, -1.0,  0.0, 0.5, -1.0,  0.0, 0.5, -1.0,  0.0, 0.5, -1.0]
+    cfg.rewards["nominal_posture"] = RewardTermCfg(
+        func=wheelie_mdp.nominal_posture_penalty,
+        weight=-0.1,
+        params={"nominal_positions": default_joint_angles}
+    )
