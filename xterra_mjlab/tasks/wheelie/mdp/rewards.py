@@ -179,8 +179,10 @@ def action_rate_penalty(env) -> torch.Tensor:
 def mechanical_work_penalty(env) -> torch.Tensor:
     """Penalizes absolute energy consumption to stop pointless leg waving."""
     # Power = Torque * Joint Velocity
-    tau = env.scene["robot"].data.actuator_force
+    # CHANGE: Use 'applied_torque' (size 12) instead of 'actuator_force' (size 24)
+    tau = env.scene["robot"].data.applied_torque
     q_dot = env.scene["robot"].data.joint_vel
+    
     return torch.sum(torch.abs(tau * q_dot), dim=1)
 
 def nominal_posture_penalty(env, nominal_positions: list) -> torch.Tensor:
