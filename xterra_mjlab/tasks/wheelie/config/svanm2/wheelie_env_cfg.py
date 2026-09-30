@@ -433,10 +433,6 @@ def svanm2_wheelie_stairs_cfg(play: bool = False):
         params={"target_distance": 8.2}, 
     )
 
-
-    return cfg
-    
-# 9. SIM-TO-REAL PENALTIES
     cfg.rewards["action_rate"] = RewardTermCfg(
         func=wheelie_mdp.action_rate_penalty,
         weight=-0.01, # Small weight, triggers every timestep
@@ -454,3 +450,6 @@ def svanm2_wheelie_stairs_cfg(play: bool = False):
         weight=-0.1,
         params={"nominal_positions": default_joint_angles}
     )
+
+
+    return cfg    
