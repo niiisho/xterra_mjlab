@@ -129,7 +129,7 @@ def min_velocity_penalty(env, min_vel: float = 0.1, grace_period: int = 50) -> t
     past_grace = env.episode_length_buf > grace_period
     return (too_slow & past_grace).float()
 
-def rear_knee_posture_penalty(env, target_calf: float = 1.0, grace_period: int = 30) -> torch.Tensor:
+def rear_knee_posture_penalty(env, target_calf: float = 1.0) -> torch.Tensor:
     joint_pos = env.scene["robot"].data.joint_pos
     
     rl_calf = joint_pos[:, 8]
@@ -167,3 +167,24 @@ def reached_goal_distance(env, target_distance: float) -> torch.Tensor:
     
     # Returns True (1) if it crossed the absolute X line, False (0) otherwise
     return root_x > target_distance
+    
+    
+# --- SIM-TO-REAL REGULARIZATION REWARDS ---
+
+def action_rate_penalty(env) -> torch.Tensor:
+    """Penalizes high-frequency changes in motor commands to prevent jitter."""
+    # Calculates the squared difference between current and previous neural network actions
+    return torch.sum(torch.square(env.action_manager.action - env.action_manager.prev_action), dim=1)
+
+def mechanical_work_penalty(env) -> torch.Tensor:
+    """Penalizes absolute energy consumption to stop pointless leg waving."""
+    # Power = Torque * Joint Velocity
+    tau = env.scene["robot"].data.actuator_force
+    q_dot = env.scene["robot"].data.joint_vel
+    return torch.sum(torch.abs(tau * q_dot), dim=1)
+
+def nominal_posture_penalty(env, nominal_positions: list) -> torch.Tensor:
+    """Forces the robot to maintain a safe, neutral stance when not climbing."""
+    joint_pos = env.scene["robot"].data.joint_pos
+    target = torch.tensor(nominal_positions, device=joint_pos.device)
+    return torch.sum(torch.square(joint_pos - target), dim=1)
