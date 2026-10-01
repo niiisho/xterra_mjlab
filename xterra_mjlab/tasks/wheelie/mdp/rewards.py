@@ -212,25 +212,19 @@ def targeted_joint_pos_penalty(env, joint_indices: list, target_positions: list)
     return torch.sum(torch.square(problem_joints_pos - targets), dim=1)
 
 def rear_startup_contact_termination(
-    env, 
-    sensor_name: str, 
-    startup_steps: int = 20
+    env,
+    joint_indices: list,
+    lower_limit: float,
+    upper_limit: float
 ) -> torch.Tensor:
-    """Terminates if the robot lifts its rear legs during the initial startup phase."""
-    sensor = env.scene.sensors[sensor_name]
-    contact = sensor.data.found.squeeze(-1)
+    """Terminates the episode instantly if specific joints cross the defined limits."""
+    joint_pos = env.scene["robot"].data.joint_pos
     
-    # Assuming standard mapping: FL=0, FR=1, RL=2, RR=3
-    rl_on = contact[:, 2] >= 0.5
-    rr_on = contact[:, 3] >= 0.5
+    # Extract the positions of only the specified joints
+    target_joints = joint_pos[:, joint_indices]
     
-    # We want BOTH rear legs planted. It's a violation if either is in the air.
-    # (If you only want to terminate when BOTH are in the air simultaneously, 
-    # change this to: violation = ~(rl_on | rr_on) )
-    violation = ~(rl_on & rr_on)
+    # Check if any of these joints exceed the lower or upper bounds
+    is_out_of_bounds = (target_joints < lower_limit) | (target_joints > upper_limit)
     
-    # Only trigger this rule during the first N steps
-    is_startup = env.episode_length_buf <= startup_steps
-    
-    return violation & is_startup
-
+    # Terminate if ANY of the specified joints violate the limit (dim=1 reduces across the joints)
+    return torch.any(is_out_of_bounds, dim=1)
