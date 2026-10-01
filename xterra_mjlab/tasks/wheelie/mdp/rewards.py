@@ -211,3 +211,26 @@ def targeted_joint_pos_penalty(env, joint_indices: list, target_positions: list)
     # Sum of squared errors from the resting position
     return torch.sum(torch.square(problem_joints_pos - targets), dim=1)
 
+def rear_startup_contact_termination(
+    env, 
+    sensor_name: str, 
+    startup_steps: int = 20
+) -> torch.Tensor:
+    """Terminates if the robot lifts its rear legs during the initial startup phase."""
+    sensor = env.scene.sensors[sensor_name]
+    contact = sensor.data.found.squeeze(-1)
+    
+    # Assuming standard mapping: FL=0, FR=1, RL=2, RR=3
+    rl_on = contact[:, 2] >= 0.5
+    rr_on = contact[:, 3] >= 0.5
+    
+    # We want BOTH rear legs planted. It's a violation if either is in the air.
+    # (If you only want to terminate when BOTH are in the air simultaneously, 
+    # change this to: violation = ~(rl_on | rr_on) )
+    violation = ~(rl_on & rr_on)
+    
+    # Only trigger this rule during the first N steps
+    is_startup = env.episode_length_buf <= startup_steps
+    
+    return violation & is_startup
+
