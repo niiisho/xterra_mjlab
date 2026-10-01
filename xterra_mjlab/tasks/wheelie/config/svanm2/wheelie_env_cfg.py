@@ -454,7 +454,7 @@ def svanm2_wheelie_stairs_cfg(play: bool = False):
     # Expand this list! 
     # Example: 1 (FL_thigh), 4 (FR_thigh), 12 (Belly), 6 (RL_hip_abduct), 9 (RR_hip_abduct)
     # *You must check your URDF to confirm 6 and 9 are the exact rear hip roll/abduction indices.*
-    straitjacket_indices = [1, 4, 12, 6, 9] 
+    straitjacket_indices = [1, 4, 6, 9] 
     
     # Add 0.0 for both rear hips to force them to point perfectly straight forward
     straitjacket_targets = [0.5, 0.5, 0.0, 0.0, 0.0] 
