@@ -478,8 +478,8 @@ def svanm2_wheelie_stairs_cfg(play: bool = False):
         params={
             # Replace [6, 9] with your exact hip abduction indices if they differ
             "joint_indices": [6, 9], 
-            "lower_limit": -0.3,
-            "upper_limit": 0.3
+            "lower_limit": -0.6,
+            "upper_limit": 0.6
         },
     )
 
