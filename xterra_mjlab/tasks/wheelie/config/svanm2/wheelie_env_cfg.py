@@ -473,5 +473,13 @@ def svanm2_wheelie_stairs_cfg(play: bool = False):
         }
     )
 
+    cfg.terminations["startup_leg_lift"] = TerminationTermCfg(
+        func=wheelie_mdp.rear_startup_contact_termination,
+        params={
+            "sensor_name": "feet_ground_contact",
+            "startup_steps": 20
+        },
+    )
+
 
     return cfg    
