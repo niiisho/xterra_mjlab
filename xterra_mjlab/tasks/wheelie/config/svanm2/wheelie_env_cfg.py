@@ -343,8 +343,6 @@ def svanm2_wheelie_stairs_cfg(play: bool = False):
         func=height_scan,
         params={"sensor_name": "base_height_scan"}
     )
-    # ---------------------------
-    # cfg.observations["critic"].terms["height_scan"] = cfg.observations["actor"].terms["height_scan"]
 
     # Pop default tracking rewards since we are hard-coding forward drive
     for key in ["track_linear_velocity", "track_angular_velocity", "air_time", "foot_clearance", "pose", "upright", "foot_slip"]:
@@ -449,6 +447,33 @@ def svanm2_wheelie_stairs_cfg(play: bool = False):
         func=wheelie_mdp.nominal_posture_penalty,
         weight=-0.1,
         params={"nominal_positions": default_joint_angles}
+    )
+
+    # --- TARGETED JOINT STRAITJACKETS ---
+    
+    # Expand this list! 
+    # Example: 1 (FL_thigh), 4 (FR_thigh), 12 (Belly), 6 (RL_hip_abduct), 9 (RR_hip_abduct)
+    # *You must check your URDF to confirm 6 and 9 are the exact rear hip roll/abduction indices.*
+    straitjacket_indices = [1, 4, 12, 6, 9] 
+    
+    # Add 0.0 for both rear hips to force them to point perfectly straight forward
+    straitjacket_targets = [0.5, 0.5, 0.0, 0.0, 0.0] 
+    
+    # 1. Stop the fast, aggressive flailing immediately
+    cfg.rewards["strict_belly_thigh_vel"] = RewardTermCfg(
+        func=wheelie_mdp.targeted_joint_velocity_penalty,
+        weight=-0.05,  
+        params={"joint_indices": straitjacket_indices}
+    )
+
+    # 2. Force them to lock into a rigid, straight posture
+    cfg.rewards["strict_belly_thigh_pos"] = RewardTermCfg(
+        func=wheelie_mdp.targeted_joint_pos_penalty,
+        weight=-0.5,  
+        params={
+            "joint_indices": straitjacket_indices,
+            "target_positions": straitjacket_targets
+        }
     )
 
 
