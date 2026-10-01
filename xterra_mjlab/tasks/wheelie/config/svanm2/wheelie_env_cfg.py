@@ -451,22 +451,19 @@ def svanm2_wheelie_stairs_cfg(play: bool = False):
 
     # --- TARGETED JOINT STRAITJACKETS ---
     
-    # Expand this list! 
-    # Example: 1 (FL_thigh), 4 (FR_thigh), 12 (Belly), 6 (RL_hip_abduct), 9 (RR_hip_abduct)
-    # *You must check your URDF to confirm 6 and 9 are the exact rear hip roll/abduction indices.*
+    # 1 (FL_thigh), 4 (FR_thigh), 6 (RL_hip_abduct), 9 (RR_hip_abduct)
+    # Notice that '12' is completely removed!
     straitjacket_indices = [1, 4, 6, 9] 
     
-    # Add 0.0 for both rear hips to force them to point perfectly straight forward
-    straitjacket_targets = [0.5, 0.5, 0.0, 0.0, 0.0] 
+    # Exactly 4 targets to match the 4 indices above
+    straitjacket_targets = [0.5, 0.5, 0.0, 0.0] 
     
-    # 1. Stop the fast, aggressive flailing immediately
     cfg.rewards["strict_belly_thigh_vel"] = RewardTermCfg(
         func=wheelie_mdp.targeted_joint_velocity_penalty,
         weight=-0.05,  
         params={"joint_indices": straitjacket_indices}
     )
 
-    # 2. Force them to lock into a rigid, straight posture
     cfg.rewards["strict_belly_thigh_pos"] = RewardTermCfg(
         func=wheelie_mdp.targeted_joint_pos_penalty,
         weight=-0.5,  
