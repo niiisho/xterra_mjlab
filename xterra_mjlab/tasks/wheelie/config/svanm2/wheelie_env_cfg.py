@@ -473,11 +473,13 @@ def svanm2_wheelie_stairs_cfg(play: bool = False):
         }
     )
 
-    cfg.terminations["startup_leg_lift"] = TerminationTermCfg(
+    cfg.terminations["abduction_limit_crossed"] = TerminationTermCfg(
         func=wheelie_mdp.rear_startup_contact_termination,
         params={
-            "sensor_name": "feet_ground_contact",
-            "startup_steps": 20
+            # Replace [6, 9] with your exact hip abduction indices if they differ
+            "joint_indices": [6, 9], 
+            "lower_limit": -0.3,
+            "upper_limit": 0.3
         },
     )
 
