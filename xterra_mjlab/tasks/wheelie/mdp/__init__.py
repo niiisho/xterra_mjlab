@@ -19,5 +19,6 @@ from .rewards import (
     action_rate_penalty,
     targeted_joint_pos_penalty,
     targeted_joint_velocity_penalty,
+    rear_startup_contact_termination,
 )
 from .events import reset_to_wheelie_pose
