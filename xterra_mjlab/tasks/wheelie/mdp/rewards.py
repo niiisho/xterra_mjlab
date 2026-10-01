@@ -190,3 +190,24 @@ def nominal_posture_penalty(env, nominal_positions: list) -> torch.Tensor:
     joint_pos = env.scene["robot"].data.joint_pos
     target = torch.tensor(nominal_positions, device=joint_pos.device)
     return torch.sum(torch.square(joint_pos - target), dim=1)
+
+def targeted_joint_velocity_penalty(env, joint_indices: list) -> torch.Tensor:
+    """Heavily penalizes the velocity of specific joints to stop aggressive flailing."""
+    q_dot = env.scene["robot"].data.joint_vel
+    
+    # Extract only the velocities of the problematic joints
+    problem_joints_vel = q_dot[:, joint_indices]
+    
+    # Sum of squared velocities (penalizes fast, aggressive movements heavily)
+    return torch.sum(torch.square(problem_joints_vel), dim=1)
+
+
+def targeted_joint_pos_penalty(env, joint_indices: list, target_positions: list) -> torch.Tensor:
+    """Locks specific joints in place by penalizing movement away from a safe resting angle."""
+    joint_pos = env.scene["robot"].data.joint_pos
+    problem_joints_pos = joint_pos[:, joint_indices]
+    targets = torch.tensor(target_positions, device=joint_pos.device)
+    
+    # Sum of squared errors from the resting position
+    return torch.sum(torch.square(problem_joints_pos - targets), dim=1)
+
