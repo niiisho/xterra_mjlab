@@ -377,8 +377,8 @@ def svanm2_wheelie_stairs_cfg(play: bool = False):
 
     cfg.rewards["squat_penalty"] = RewardTermCfg(
         func=wheelie_mdp.base_height_penalty,
-        weight=-2.0,
-        params={"penalty_threshold": 0.37},
+        weight=-5.0,
+        params={"penalty_threshold": 0.34},
     )
 
     cfg.rewards["front_air_height"] = RewardTermCfg(
