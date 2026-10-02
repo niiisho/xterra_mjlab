@@ -327,31 +327,29 @@ def svanm2_wheelie_stairs_cfg(play: bool = False):
     cfg.events.pop("push_robot", None)
     cfg.events.pop("reset_robot_state", None)
 
-    # 5. BLIND COMMAND MANAGER & ADD HEIGHT OBSERVATIONS
-    cfg.commands.clear()
-    cfg.observations["actor"].terms.pop("command", None)
-    cfg.observations["critic"].terms.pop("command", None)
+    # 5. BLIND COMMAND MANAGER & ASYMMETRIC OBSERVATIONS
+    
+    # IMPORTANT: Ensure cfg.commands.clear() and cfg.curriculum.clear() are GONE!
 
-    # --- THE SIM-TO-REAL FIX ---
-    # 1. Blind the Actor: Ensure the exteroceptive height scanner is completely removed
+    # 1. Remove the conflicting velocity curriculum 
+    cfg.curriculum.pop("commands_vel", None)
+
+    # 2. Blind the Actor: Ensure the exteroceptive height scanner is completely removed
     cfg.observations["actor"].terms.pop("height_scan", None)
 
-    # 2. Privileged Critic: Give the perfect heightmap ONLY to the Critic network
+    # 3. Privileged Critic: Give the perfect heightmap ONLY to the Critic network
     cfg.observations["critic"].terms["height_scan"] = ObservationTermCfg(
         func=height_scan,
         params={"sensor_name": "base_height_scan"}
     )
 
-    # We kept track_linear_velocity and track_angular_velocity so it obeys commands!
-    for key in ["air_time", "foot_clearance", "pose", "upright", "foot_slip"]:
-        cfg.rewards.pop(key, None)
-    cfg.terminations.pop("fell_over", None)
-
+    # 4. Restrict Random Commands to Stop & Forward Only
     cmd_name = "velocity" if "velocity" in cfg.commands else "base_velocity"
+    
     if cmd_name in cfg.commands:
-        cfg.commands[cmd_name].ranges.lin_vel_x = (0.0, 0.6)
-        cfg.commands[cmd_name].ranges.lin_vel_y = (0.0, 0.0)
-        cfg.commands[cmd_name].ranges.ang_vel_z = (0.0, 0.0)
+        cfg.commands[cmd_name].ranges.lin_vel_x = (0.0, 0.6) # Stop (0.0) to Drive (0.6)
+        cfg.commands[cmd_name].ranges.lin_vel_y = (0.0, 0.0) # No sideways walking
+        cfg.commands[cmd_name].ranges.ang_vel_z = (0.0, 0.0) # No turning
         
 
     # 6. RELAXED TERMINATIONS FOR JUMPING
