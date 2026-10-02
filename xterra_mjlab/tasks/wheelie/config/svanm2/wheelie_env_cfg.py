@@ -347,6 +347,13 @@ def svanm2_wheelie_stairs_cfg(play: bool = False):
         cfg.rewards.pop(key, None)
     cfg.terminations.pop("fell_over", None)
 
+    cmd_name = "velocity" if "velocity" in cfg.commands else "base_velocity"
+    if cmd_name in cfg.commands:
+        cfg.commands[cmd_name].ranges.lin_vel_x = (0.0, 0.6)
+        cfg.commands[cmd_name].ranges.lin_vel_y = (0.0, 0.0)
+        cfg.commands[cmd_name].ranges.ang_vel_z = (0.0, 0.0)
+        
+
     # 6. RELAXED TERMINATIONS FOR JUMPING
     cfg.terminations["illegal_contact"] = TerminationTermCfg(
         func=wheelie_mdp.illegal_contact_fall,
