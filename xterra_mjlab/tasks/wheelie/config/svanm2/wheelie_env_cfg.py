@@ -303,8 +303,8 @@ def svanm2_wheelie_stairs_cfg(play: bool = False):
     # 3. CONTACT SENSORS (With Calf/Shank Regex)[cite: 3]
     thigh_ground_cfg = ContactSensorCfg(
         name="thigh_ground_touch",
-        # Changed 'calf' to 'shank' to perfectly match your URDF body names
-        primary=ContactMatch(mode="body", entity="robot", pattern="(FL|FR|RL|RR)_(hip|thigh|shank)_link"),
+        # Added (FL|FR)_hip_link to the front of the regex pattern
+        primary=ContactMatch(mode="body", entity="robot", pattern="(FL|FR)_hip_link|(FL|FR|RL|RR)_thigh_link"),
         secondary=ContactMatch(mode="body", pattern="terrain"), 
         fields=("found",),
         reduce="none",
@@ -360,7 +360,7 @@ def svanm2_wheelie_stairs_cfg(play: bool = False):
     
     cfg.terminations["base_too_low"] = TerminationTermCfg(
         func=wheelie_mdp.base_height_too_low,
-        params={"min_height": 0.28, "grace_period": 30},
+        params={"min_height": 0.32, "grace_period": 30},
     )
     
     cfg.terminations["sideways_fall"] = TerminationTermCfg(
@@ -378,7 +378,7 @@ def svanm2_wheelie_stairs_cfg(play: bool = False):
     cfg.rewards["squat_penalty"] = RewardTermCfg(
         func=wheelie_mdp.base_height_penalty,
         weight=-2.0,
-        params={"penalty_threshold": 0.3},
+        params={"penalty_threshold": 0.34},
     )
 
     cfg.rewards["front_air_height"] = RewardTermCfg(
