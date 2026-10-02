@@ -347,7 +347,7 @@ def svanm2_wheelie_stairs_cfg(play: bool = False):
     cmd_name = "velocity" if "velocity" in cfg.commands else "base_velocity"
     
     if cmd_name in cfg.commands:
-        cfg.commands[cmd_name].ranges.lin_vel_x = (0.0, 0.6) # Stop (0.0) to Drive (0.6)
+        cfg.commands[cmd_name].ranges.lin_vel_x = (0.0, 1.4) # Stop (0.0) to Drive (0.6)
         cfg.commands[cmd_name].ranges.lin_vel_y = (0.0, 0.0) # No sideways walking
         cfg.commands[cmd_name].ranges.ang_vel_z = (0.0, 0.0) # No turning
         
