@@ -328,9 +328,7 @@ def svanm2_wheelie_stairs_cfg(play: bool = False):
     cfg.events.pop("reset_robot_state", None)
 
     # 5. BLIND COMMAND MANAGER & ADD HEIGHT OBSERVATIONS
-    # 5. BLIND COMMAND MANAGER & ASYMMETRIC OBSERVATIONS
     cfg.commands.clear()
-    cfg.curriculum.clear()
     cfg.observations["actor"].terms.pop("command", None)
     cfg.observations["critic"].terms.pop("command", None)
 
@@ -344,8 +342,8 @@ def svanm2_wheelie_stairs_cfg(play: bool = False):
         params={"sensor_name": "base_height_scan"}
     )
 
-    # Pop default tracking rewards since we are hard-coding forward drive
-    for key in ["track_linear_velocity", "track_angular_velocity", "air_time", "foot_clearance", "pose", "upright", "foot_slip"]:
+    # We kept track_linear_velocity and track_angular_velocity so it obeys commands!
+    for key in ["air_time", "foot_clearance", "pose", "upright", "foot_slip"]:
         cfg.rewards.pop(key, None)
     cfg.terminations.pop("fell_over", None)
 
@@ -406,31 +404,6 @@ def svanm2_wheelie_stairs_cfg(play: bool = False):
         params={"min_thigh": 0.0, "grace_period": 30},
     )
 
-    # 8. MAX-EFFORT FORWARD DRIVE
-    cfg.rewards["forward_drive"] = RewardTermCfg(
-        func=wheelie_mdp.forward_velocity_reward,
-        weight=10.0,  
-    )
-    
-    cfg.rewards["min_velocity"] = RewardTermCfg(
-        func=wheelie_mdp.min_velocity_penalty,
-        weight=-3.0,
-        params={"min_vel": 0.1, "grace_period": 50},
-    )
-    
-    # HUGE reward for crossing the finish line (teaches it that reaching the top is good)
-    cfg.rewards["reached_the_top"] = RewardTermCfg(
-        func=wheelie_mdp.reached_goal_distance,
-        weight=1000.0,  # Massive bonus payout
-        params={"target_distance": 8.2}, 
-    )
-    
-    # Clean reset when it successfully clears the 6.5m mark
-    cfg.terminations["success_reached_goal"] = TerminationTermCfg(
-        func=wheelie_mdp.reached_goal_distance,
-        params={"target_distance": 8.2}, 
-    )
-
     cfg.rewards["action_rate"] = RewardTermCfg(
         func=wheelie_mdp.action_rate_penalty,
         weight=-0.01, # Small weight, triggers every timestep
@@ -448,8 +421,6 @@ def svanm2_wheelie_stairs_cfg(play: bool = False):
         weight=-0.1,
         params={"nominal_positions": default_joint_angles}
     )
-
-    # --- TARGETED JOINT STRAITJACKETS ---
     
     # 1 (FL_thigh), 4 (FR_thigh), 6 (RL_hip_abduct), 9 (RR_hip_abduct)
     # Notice that '12' is completely removed!
