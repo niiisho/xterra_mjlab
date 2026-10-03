@@ -360,7 +360,7 @@ def svanm2_wheelie_stairs_cfg(play: bool = False):
     
     cfg.terminations["base_too_low"] = TerminationTermCfg(
         func=wheelie_mdp.base_height_too_low,
-        params={"min_height": 0.2, "grace_period": 30},
+        params={"min_height": 0.28, "grace_period": 30},
     )
     
     cfg.terminations["sideways_fall"] = TerminationTermCfg(
@@ -378,7 +378,7 @@ def svanm2_wheelie_stairs_cfg(play: bool = False):
     cfg.rewards["squat_penalty"] = RewardTermCfg(
         func=wheelie_mdp.base_height_penalty,
         weight=-10.0,
-        params={"penalty_threshold": 0.37},
+        params={"penalty_threshold": 0.38},
     )
 
     cfg.rewards["front_air_height"] = RewardTermCfg(
