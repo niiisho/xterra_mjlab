@@ -228,3 +228,16 @@ def rear_startup_contact_termination(
     
     # Terminate if ANY of the specified joints violate the limit (dim=1 reduces across the joints)
     return torch.any(is_out_of_bounds, dim=1)
+
+
+def isolated_knee_termination(env, shank_sensor: str, foot_sensor: str) -> torch.Tensor:
+    """Terminates if the knee/calf touches, without triggering when the foot rolls."""
+    shank_contact = env.scene.sensors[shank_sensor].data.found.squeeze(-1)
+    foot_contact = env.scene.sensors[foot_sensor].data.found.squeeze(-1)
+    
+    # Logical deduction: If the shank body registers contact, BUT the foot geom does not,
+    # the contact must be happening higher up on the calf/knee!
+    knee_touch = shank_contact & ~foot_contact
+    
+    # Terminate if any of the 4 knees touch the ground
+    return torch.any(knee_touch, dim=1)
