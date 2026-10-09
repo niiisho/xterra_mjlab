@@ -235,9 +235,12 @@ def isolated_knee_termination(env, shank_sensor: str, foot_sensor: str) -> torch
     shank_contact = env.scene.sensors[shank_sensor].data.found.squeeze(-1)
     foot_contact = env.scene.sensors[foot_sensor].data.found.squeeze(-1)
     
-    # Logical deduction: If the shank body registers contact, BUT the foot geom does not,
-    # the contact must be happening higher up on the calf/knee!
-    knee_touch = shank_contact & ~foot_contact
+    # Convert float tensors (1.0 or 0.0) into strict boolean True/False tensors
+    shank_is_touching = shank_contact > 0.5
+    foot_is_touching = foot_contact > 0.5
+    
+    # Logical deduction: If the shank is touching BUT the foot is not, it must be the knee!
+    knee_touch = shank_is_touching & ~foot_is_touching
     
     # Terminate if any of the 4 knees touch the ground
     return torch.any(knee_touch, dim=1)
