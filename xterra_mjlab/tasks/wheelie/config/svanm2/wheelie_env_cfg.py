@@ -300,26 +300,49 @@ def svanm2_wheelie_stairs_cfg(play: bool = False):
         debug_vis=True #[cite: 4]
     )
 
-    # 3. CONTACT SENSORS (With Calf/Shank Regex)[cite: 3]
+    # 3. CONTACT SENSORS
     thigh_ground_cfg = ContactSensorCfg(
         name="thigh_ground_touch",
-        # Added (FL|FR)_hip_link to the front of the regex pattern
         primary=ContactMatch(mode="body", entity="robot", pattern="(FL|FR)_hip_link|(FL|FR|RL|RR)_thigh_link"),
         secondary=ContactMatch(mode="body", pattern="terrain"), 
         fields=("found",),
         reduce="none",
         num_slots=1,
     )
+    
     trunk_ground_cfg = ContactSensorCfg(
         name="trunk_ground_touch",
-        primary=ContactMatch(mode="body", entity="robot", pattern="base"), #[cite: 3]
-        secondary=ContactMatch(mode="body", pattern="terrain"), #[cite: 3]
-        fields=("found",), #[cite: 3]
-        reduce="none", #[cite: 3]
-        num_slots=1, #[cite: 3]
+        primary=ContactMatch(mode="body", entity="robot", pattern="base"),
+        secondary=ContactMatch(mode="body", pattern="terrain"),
+        fields=("found",),
+        reduce="none",
+        num_slots=1,
     )
 
-    cfg.scene.sensors = (cfg.scene.sensors or ()) + (thigh_ground_cfg, trunk_ground_cfg, height_scanner_cfg)
+    # NEW: Match ONLY the exact foot collision geoms using mode="geom"
+    feet_ground_cfg = ContactSensorCfg(
+        name="feet_ground_contact",
+        primary=ContactMatch(mode="geom", entity="robot", pattern="(FL|FR|RL|RR)_foot"),
+        secondary=ContactMatch(mode="body", pattern="terrain"),
+        fields=("found",),
+        reduce="none",
+        num_slots=1,
+    )
+    
+    # NEW: Match the entire shank body 
+    shank_ground_cfg = ContactSensorCfg(
+        name="shank_ground_touch",
+        primary=ContactMatch(mode="body", entity="robot", pattern="(FL|FR|RL|RR)_shank_link"),
+        secondary=ContactMatch(mode="body", pattern="terrain"),
+        fields=("found",),
+        reduce="none",
+        num_slots=1,
+    )
+
+    # Add all four sensors to the scene
+    cfg.scene.sensors = (cfg.scene.sensors or ()) + (
+        thigh_ground_cfg, trunk_ground_cfg, height_scanner_cfg, feet_ground_cfg, shank_ground_cfg
+    )
 
     # 4. REMOVE CUSTOM SPAWNS
     cfg.events.pop("reset_base", None)
@@ -360,7 +383,7 @@ def svanm2_wheelie_stairs_cfg(play: bool = False):
     
     cfg.terminations["base_too_low"] = TerminationTermCfg(
         func=wheelie_mdp.base_height_too_low,
-        params={"min_height": 0.36, "grace_period": 30},
+        params={"min_height": 0.25, "grace_period": 30},
     )
     
     cfg.terminations["sideways_fall"] = TerminationTermCfg(
@@ -378,7 +401,7 @@ def svanm2_wheelie_stairs_cfg(play: bool = False):
     cfg.rewards["squat_penalty"] = RewardTermCfg(
         func=wheelie_mdp.base_height_penalty,
         weight=-10.0,
-        params={"penalty_threshold": 0.4},
+        params={"penalty_threshold": 0.32},
     )
 
     cfg.rewards["front_air_height"] = RewardTermCfg(
@@ -454,8 +477,16 @@ def svanm2_wheelie_stairs_cfg(play: bool = False):
         params={
             # Replace [6, 9] with your exact hip abduction indices if they differ
             "joint_indices": [6, 9], 
-            "lower_limit": -0.6,
-            "upper_limit": 0.6
+            "lower_limit": -0.8,
+            "upper_limit": 0.8
+        },
+    )
+
+    cfg.terminations["knee_touch_fall"] = TerminationTermCfg(
+        func=wheelie_mdp.isolated_knee_termination,
+        params={
+            "shank_sensor": "shank_ground_touch",
+            "foot_sensor": "feet_ground_contact"
         },
     )
 
