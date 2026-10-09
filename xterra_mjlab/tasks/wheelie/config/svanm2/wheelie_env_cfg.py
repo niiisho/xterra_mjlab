@@ -318,18 +318,8 @@ def svanm2_wheelie_stairs_cfg(play: bool = False):
         reduce="none",
         num_slots=1,
     )
-
-    # NEW: Match ONLY the exact foot collision geoms using mode="geom"
-    feet_ground_cfg = ContactSensorCfg(
-        name="feet_ground_contact",
-        primary=ContactMatch(mode="geom", entity="robot", pattern="(FL|FR|RL|RR)_foot"),
-        secondary=ContactMatch(mode="body", pattern="terrain"),
-        fields=("found",),
-        reduce="none",
-        num_slots=1,
-    )
     
-    # NEW: Match the entire shank body 
+    # NEW: Match the entire shank body (we don't need to define feet_ground_contact because it already exists!)
     shank_ground_cfg = ContactSensorCfg(
         name="shank_ground_touch",
         primary=ContactMatch(mode="body", entity="robot", pattern="(FL|FR|RL|RR)_shank_link"),
@@ -339,9 +329,9 @@ def svanm2_wheelie_stairs_cfg(play: bool = False):
         num_slots=1,
     )
 
-    # Add all four sensors to the scene
+    # Add only the new sensors (thigh, trunk, height, and shank)
     cfg.scene.sensors = (cfg.scene.sensors or ()) + (
-        thigh_ground_cfg, trunk_ground_cfg, height_scanner_cfg, feet_ground_cfg, shank_ground_cfg
+        thigh_ground_cfg, trunk_ground_cfg, height_scanner_cfg, shank_ground_cfg
     )
 
     # 4. REMOVE CUSTOM SPAWNS
