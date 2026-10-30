@@ -16,6 +16,8 @@ from mjlab.terrains.heightfield_terrains import HfDiscreteObstaclesTerrainCfg #[
 from xterra_mjlab.tasks.velocity.config.svanm2.env_cfgs import svanm2_flat_env_cfg
 from xterra_mjlab.tasks.wheelie import mdp as wheelie_mdp
 from mjlab.managers.event_manager import EventTermCfg
+from mjlab.envs.mdp.observations import height_scan
+from mjlab.managers.observation_manager import ObservationTermCfg
 
 import numpy as np
 import mujoco
@@ -158,7 +160,7 @@ def svanm2_front_wheelie_cfg(play: bool = False):
     # 5. FEED THE SCANNER TO THE NEURAL NETWORK (Critic Only for Asymmetric setup)
     if "critic" in cfg.observations:
         cfg.observations["critic"].terms["height_scan"] = ObservationTermCfg(
-            func=wheelie_mdp.height_scan,
+            func=height_scan,
             params={"sensor_name": "base_height_scan"}
         )
         
