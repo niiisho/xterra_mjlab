@@ -274,7 +274,6 @@ def svanm2_front_wheelie_cfg(play: bool = False):
         func=wheelie_mdp.smart_stair_clearance_reward,
         weight=2.0,
         params={
-            "foot_sensor": "feet_ground_contact", 
             "height_sensor": "base_height_scan",
             "target_clearance": 0.8  # Triggers when average terrain is closer than 0.8m
         },
