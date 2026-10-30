@@ -123,16 +123,6 @@ def svanm2_front_wheelie_cfg(play: bool = False):
         max_distance=2.0, 
         debug_vis=True 
     )
-
-    # B. The Foot Scan (Contact Sensor)
-    foot_scan_cfg = ContactSensorCfg(
-        name="feet_ground_contact", 
-        primary=ContactMatch(mode="geom", entity="robot", pattern="(FL|FR|RL|RR)_foot"),
-        secondary=ContactMatch(mode="body", pattern="terrain"),
-        fields=("found",),
-        reduce="none",
-        num_slots=1,
-    )
     
     
     thigh_ground_cfg = ContactSensorCfg(
@@ -154,10 +144,10 @@ def svanm2_front_wheelie_cfg(play: bool = False):
 
     # 4. ADD ALL SENSORS TO THE SCENE
     cfg.scene.sensors = (cfg.scene.sensors or ()) + (
-        thigh_ground_cfg, trunk_ground_cfg, base_height_scan_cfg, foot_scan_cfg
+        thigh_ground_cfg, trunk_ground_cfg, base_height_scan_cfg
     )
 
-    # 5. FEED THE SCANNER TO THE NEURAL NETWORK (Critic Only for Asymmetric setup)
+    # 5. FEED THE SCANNER TO THE NEURAL NETWORK 
     if "critic" in cfg.observations:
         cfg.observations["critic"].terms["height_scan"] = ObservationTermCfg(
             func=height_scan,
