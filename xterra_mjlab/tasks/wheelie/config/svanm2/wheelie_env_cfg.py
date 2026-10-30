@@ -18,6 +18,10 @@ from xterra_mjlab.tasks.wheelie import mdp as wheelie_mdp
 from mjlab.managers.event_manager import EventTermCfg
 from mjlab.terrains.heightfield_terrains import HfPyramidSlopedTerrainCfg
 from mjlab.envs.mdp.observations import height_scan
+from mjlab.sensor.terrain_height_sensor import TerrainHeightSensorCfg
+from mjlab.sensor.raycast_sensor import GridPatternCfg
+from mjlab.sensor.builtin_sensor import ObjRef
+from mjlab.managers.observation_manager import ObservationTermCfg
 
 import numpy as np
 import mujoco
@@ -52,7 +56,6 @@ class PrimitiveStairsCfg(SubTerrainCfg):
         )
         geometries.append(TerrainGeometry(geom=base_geom))
         
-        # 2. RANDOMIZED STAIRS
         # 2. RANDOMIZED STAIRS
         norm_diff = difficulty / 10.0 if difficulty > 1.0 else difficulty
         target_h = self.step_height_min + norm_diff * (self.step_height_max - self.step_height_min)
@@ -112,7 +115,30 @@ def svanm2_front_wheelie_cfg(play: bool = False):
     cfg.events.pop("push_robot", None)
     cfg.events.pop("reset_robot_state", None)
 
-    # 2. SENSORS (Only checking Thighs and Trunk against any ground surface)
+    # 2. SENSORS
+    base_height_scan_cfg = TerrainHeightSensorCfg(
+        name="base_height_scan",
+        frame=ObjRef(type="body", name="base", entity="robot"),
+        pattern=GridPatternCfg(
+            size=(1.5, 1.5), 
+            resolution=0.1,  
+            direction=(0.0, 0.0, -1.0)
+        ),
+        max_distance=2.0, 
+        debug_vis=True 
+    )
+
+    # B. The Foot Scan (Contact Sensor)
+    foot_scan_cfg = ContactSensorCfg(
+        name="feet_ground_contact", 
+        primary=ContactMatch(mode="geom", entity="robot", pattern="(FL|FR|RL|RR)_foot"),
+        secondary=ContactMatch(mode="body", pattern="terrain"),
+        fields=("found",),
+        reduce="none",
+        num_slots=1,
+    )
+    
+    
     thigh_ground_cfg = ContactSensorCfg(
         name="thigh_ground_touch",
         primary=ContactMatch(mode="body", entity="robot", pattern="(FL|FR|RL|RR)_thigh_link"),
@@ -130,7 +156,20 @@ def svanm2_front_wheelie_cfg(play: bool = False):
         num_slots=1,
     )
 
-    cfg.scene.sensors = (cfg.scene.sensors or ()) + (thigh_ground_cfg, trunk_ground_cfg)
+    # 4. ADD ALL SENSORS TO THE SCENE
+    cfg.scene.sensors = (cfg.scene.sensors or ()) + (
+        thigh_ground_cfg, trunk_ground_cfg, base_height_scan_cfg, foot_scan_cfg
+    )
+
+    # 5. FEED THE SCANNER TO THE NEURAL NETWORK (Critic Only for Asymmetric setup)
+    if "critic" in cfg.observations:
+        cfg.observations["critic"].terms["height_scan"] = ObservationTermCfg(
+            func=wheelie_mdp.height_scan,
+            params={"sensor_name": "base_height_scan"}
+        )
+        
+    cfg.observations["actor"].terms.pop("height_scan", None)
+
 
     # 3. CLEANUP LOCOMOTION TASKS
     cfg.commands.clear()
@@ -242,6 +281,16 @@ def svanm2_front_wheelie_cfg(play: bool = False):
         params={
             "min_thigh": 0.0,
             "grace_period": 30,
+        },
+    )
+    
+    cfg.rewards["smart_clearance"] = RewardTermCfg(
+        func=wheelie_mdp.smart_stair_clearance_reward,
+        weight=2.0,
+        params={
+            "foot_sensor": "feet_ground_contact", 
+            "height_sensor": "base_height_scan",
+            "target_clearance": 0.8  # Triggers when average terrain is closer than 0.8m
         },
     )
     
@@ -360,7 +409,7 @@ def svanm2_wheelie_stairs_cfg(play: bool = False):
     cmd_name = "velocity" if "velocity" in cfg.commands else "base_velocity"
     
     if cmd_name in cfg.commands:
-        cfg.commands[cmd_name].ranges.lin_vel_x = (0.0, 1.4) # Stop (0.0) to Drive (0.6)
+        cfg.commands[cmd_name].ranges.lin_vel_x = (-1, 0) # Stop (0.0) to Drive (0.6)
         cfg.commands[cmd_name].ranges.lin_vel_y = (0.0, 0.0) # No sideways walking
         cfg.commands[cmd_name].ranges.ang_vel_z = (0.0, 0.0) # No turning
         
