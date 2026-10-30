@@ -244,3 +244,35 @@ def isolated_knee_termination(env, shank_sensor: str, foot_sensor: str) -> torch
     
     # Terminate if any of the 4 knees touch the ground
     return torch.any(knee_touch, dim=1)
+    
+    
+    
+def smart_stair_clearance_reward(
+    env, 
+    foot_sensor: str, 
+    height_sensor: str, 
+    target_clearance: float = 0.5
+) -> torch.Tensor:
+    """
+    Rewards the robot for lifting its front feet when the height scanner 
+    detects uneven terrain or stairs directly underneath it.
+    """
+    # 1. READ FOOT CONTACTS (Check if front feet are successfully lifted)
+    contact = env.scene.sensors[foot_sensor].data.found.squeeze(-1)
+    fl_off = contact[:, 0] < 0.5
+    fr_off = contact[:, 1] < 0.5
+    front_lifted = fl_off & fr_off
+    
+    # 2. READ HEIGHT SCANNER (Check the terrain depth)
+    # Note: Depending on your exact mjlab framework version, the raycast distance 
+    # might be stored under .distance, .pos_w[:, :, 2], or .ray_hits_w
+    terrain_distances = env.scene.sensors[height_sensor].data.distance
+    
+    # Calculate the average distance to the terrain across all laser points
+    avg_terrain_depth = torch.mean(terrain_distances, dim=1)
+    
+    # 3. COMBINE LOGIC
+    # Give points if the front feet are up AND the terrain is close (stairs are present)
+    stairs_approaching = avg_terrain_depth < target_clearance
+    
+    return (front_lifted & stairs_approaching).float()
