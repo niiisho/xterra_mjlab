@@ -16,12 +16,6 @@ from mjlab.terrains.heightfield_terrains import HfDiscreteObstaclesTerrainCfg #[
 from xterra_mjlab.tasks.velocity.config.svanm2.env_cfgs import svanm2_flat_env_cfg
 from xterra_mjlab.tasks.wheelie import mdp as wheelie_mdp
 from mjlab.managers.event_manager import EventTermCfg
-from mjlab.terrains.heightfield_terrains import HfPyramidSlopedTerrainCfg
-from mjlab.envs.mdp.observations import height_scan
-from mjlab.sensor.terrain_height_sensor import TerrainHeightSensorCfg
-from mjlab.sensor.raycast_sensor import GridPatternCfg
-from mjlab.sensor.builtin_sensor import ObjRef
-from mjlab.managers.observation_manager import ObservationTermCfg
 
 import numpy as np
 import mujoco
