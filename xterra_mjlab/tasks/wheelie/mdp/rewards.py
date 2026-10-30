@@ -249,7 +249,6 @@ def isolated_knee_termination(env, shank_sensor: str, foot_sensor: str) -> torch
     
 def smart_stair_clearance_reward(
     env, 
-    foot_sensor: str, 
     height_sensor: str, 
     target_clearance: float = 0.5
 ) -> torch.Tensor:
