@@ -116,7 +116,7 @@ def svanm2_front_wheelie_cfg(play: bool = False):
         name="base_height_scan",
         frame=ObjRef(type="body", name="base", entity="robot"),
         pattern=GridPatternCfg(
-            size=(1.5, 1.5), 
+            size=(5, 5), 
             resolution=0.1,  
             direction=(0.0, 0.0, -1.0)
         ),
