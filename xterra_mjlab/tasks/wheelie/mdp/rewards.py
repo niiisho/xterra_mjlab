@@ -255,7 +255,7 @@ def smart_stair_clearance_reward(
     Rewards the robot for lifting its front feet when the height scanner 
     detects uneven terrain or stairs directly underneath it.
     """
-    terrain_distances = env.scene.sensors[height_sensor].data.distance
+    terrain_distances = env.scene.sensors[height_sensor].data.distances
     
     # Calculate the average distance to the terrain across all laser points
     avg_terrain_depth = torch.mean(terrain_distances, dim=1)
