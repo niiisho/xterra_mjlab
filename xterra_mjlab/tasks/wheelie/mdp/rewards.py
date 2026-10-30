@@ -256,11 +256,6 @@ def smart_stair_clearance_reward(
     Rewards the robot for lifting its front feet when the height scanner 
     detects uneven terrain or stairs directly underneath it.
     """
-    # 1. READ FOOT CONTACTS (Check if front feet are successfully lifted)
-    contact = env.scene.sensors[foot_sensor].data.found.squeeze(-1)
-    fl_off = contact[:, 0] < 0.5
-    fr_off = contact[:, 1] < 0.5
-    front_lifted = fl_off & fr_off
     
     # 2. READ HEIGHT SCANNER (Check the terrain depth)
     # Note: Depending on your exact mjlab framework version, the raycast distance 
@@ -274,4 +269,4 @@ def smart_stair_clearance_reward(
     # Give points if the front feet are up AND the terrain is close (stairs are present)
     stairs_approaching = avg_terrain_depth < target_clearance
     
-    return (front_lifted & stairs_approaching).float()
+    return stairs_approaching.float()
