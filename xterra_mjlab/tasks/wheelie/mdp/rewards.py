@@ -73,15 +73,11 @@ def front_air_height_reward(
 
     valid_feet = fl_off & fr_off & (rl_on | rr_on)
     
-    # Check if the hips are high enough
+    # Check if the hips are high enough (removed forward_vel multiplier so 0 m/s gets full reward)
     height = env.scene["robot"].data.body_com_pos_w[:, 0, 2]
     valid_height = height > min_height
 
-    forward_vel = env.scene["robot"].data.root_link_vel_w[:, 0]
-    vel_multiplier = torch.clamp(forward_vel / 0.3, min=0.0, max=1.0)
-
-    return (valid_feet & valid_height).float() * vel_multiplier
-
+    return (valid_feet & valid_height).float()
 
 def front_contact_penalty(env, sensor_name: str, grace_period: int = 50) -> torch.Tensor:
     sensor = env.scene.sensors[sensor_name]
@@ -265,3 +261,10 @@ def smart_stair_clearance_reward(
     stairs_approaching = avg_terrain_depth < target_clearance
     
     return (stairs_approaching).float()
+
+def balance_velocity_penalty(env, deadband: float = 0.20) -> torch.Tensor:
+    """Zero penalty for small balancing steps inside deadband; penalizes walking/drifting beyond it."""
+    xy_vel = env.scene["robot"].data.root_link_vel_w[:, :2]
+    speed = torch.norm(xy_vel, dim=1)
+    excess_speed = torch.clamp(speed - deadband, min=0.0)
+    return torch.square(excess_speed)
