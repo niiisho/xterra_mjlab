@@ -6,7 +6,7 @@ from mjlab.tasks.velocity.rl import VelocityOnPolicyRunner
 from .wheelie_env_cfg import svanm2_front_wheelie_cfg, svanm2_rear_wheelie_cfg, svanm2_front_wheelie_fromflat_cfg, svanm2_wheelie_stairs_cfg
 from .rl_cfg import svanm2_wheelie_ppo_runner_cfg
 
-STAND_WHEELIE_TASK = "_apply_standing_wheelie_mdp"
+STAND_WHEELIE_TASK = "xTerra-Mjlab-Wheelie-Stand-SvanM2"
 FRONT_WHEELIE_TASK = "xTerra-Mjlab-Wheelie-Front-SvanM2"
 FRONT_WHEELIE_FROMFLAT_TASK = "xTerra-Mjlab-Wheelie-Front-FromFlat-SvanM2"
 REAR_WHEELIE_TASK = "xTerra-Mjlab-Wheelie-Rear-SvanM2"
