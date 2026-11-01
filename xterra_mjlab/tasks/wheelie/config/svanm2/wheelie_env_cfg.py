@@ -96,7 +96,7 @@ class PrimitiveStairsCfg(SubTerrainCfg):
         return TerrainOutput(origin=origin, geometries=geometries, flat_patches=None)
 
 
-def svanm2_front_wheelie_cfg(cfg):
+def _apply_standing_wheelie_mdp(cfg):
     """Shared helper: configures 0-velocity commands, removes walking rewards, keeps posture & 270-obs policy."""
     # 1. SENSORS
     height_scanner_cfg = TerrainHeightSensorCfg(
@@ -287,14 +287,14 @@ def svanm2_front_wheelie_cfg(cfg):
     return cfg
 
 
-# def svanm2_front_wheelie_cfg(play: bool = False):
-#     cfg = svanm2_flat_env_cfg(play=play)
-#     cfg = _apply_standing_wheelie_mdp(cfg)
-#     cfg.terminations["tunnel_boundary"] = TerminationTermCfg(
-#         func=wheelie_mdp.lateral_out_of_bounds,
-#         params={"max_drift": 1.0},
-#     )
-#     return cfg
+def svanm2_front_wheelie_cfg(play: bool = False):
+    cfg = svanm2_flat_env_cfg(play=play)
+    cfg = _apply_standing_wheelie_mdp(cfg)
+    cfg.terminations["tunnel_boundary"] = TerminationTermCfg(
+        func=wheelie_mdp.lateral_out_of_bounds,
+        params={"max_drift": 1.0},
+    )
+    return cfg
 
 
 def svanm2_front_wheelie_fromflat_cfg(play: bool = False):
